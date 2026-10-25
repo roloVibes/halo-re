@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "re.finding event",
+  "description": "One confirmed or candidate finding from binary analysis, published to the Studio live feed.",
+  "type": "object",
+  "required": ["binary", "function", "issue", "state"],
+  "additionalProperties": false,
+  "properties": {
+    "binary": { "type": "string" },
+    "function": { "type": "string" },
+    "issue": { "type": "string" },
+    "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+    "state": { "type": "string", "enum": ["candidate", "confirmed", "rejected", "needs-review"] },
+    "evidence": { "type": "string" }
+  }
+}

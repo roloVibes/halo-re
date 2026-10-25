@@ -1,0 +1,48 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: triage.platform-classify
+version: '1.0'
+title: Platform and classification with evidence
+category: triage
+phase: triage
+objective: Classify platform/arch (WHERE) and binary type with confidence (WHAT), citing the header field
+  or string that proves each claim. Extension and keyword classifiers fail on no-extension and version-suffix
+  files; every claim needs evidence.
+methodology_refs:
+- halo-re:binary-triage
+assigned_role: triage
+prerequisites:
+- kind: binary
+  detail: target binary path
+- kind: documentation
+  detail: any known context (origin, suspected family, advisory)
+scope_requirements:
+  required_activities:
+  - static-analysis
+  - tool-driven-querying
+  target_kinds:
+  - mach-o
+  - elf
+  - pe
+stages:
+- name: where
+  description: Format/arch/endianness from headers; OS indicators from strings and needed libraries.
+  impact: read-only
+  expected_observations:
+  - platform with the proving header field
+- name: what
+  description: 'Binary type + confidence + evidence: driver, daemon, library, installer, stealer, dropper.'
+  impact: read-only
+  expected_observations:
+  - type, confidence, evidence
+- name: adversarial-check
+  description: 'Attack your own classification: what would a different type look like here? Keyword guesses
+    are labeled as such.'
+  impact: read-only
+  expected_observations:
+  - alternative considered and rejected, or uncertainty labeled
+completion_criteria:
+- WHERE and WHAT both answered with evidence and confidence
+finding_classification: n/a (classification output)
+judge_requirements:
+  required: false
+  independent_validation: false

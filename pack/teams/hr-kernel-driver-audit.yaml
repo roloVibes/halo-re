@@ -1,0 +1,35 @@
+# Kernel-driver audit line: IOCTL map, import-surface capabilities, verified findings.
+name: hr-kernel-driver-audit
+description: >-
+  Windows kernel driver audit: build the IOCTL dispatch map, audit the
+  import surface for capability classes, verify every candidate finding
+  against the decompiled code, and report only confirmed results.
+version: 1
+tags: [halo-re, kernel, audit]
+agents:
+- agent: hr-orchestrator
+  role: main
+  as: boss
+- agent: hr-triage
+  role: researcher
+  as: triage
+- agent: hr-analyst
+  role: subagent
+  as: analyst
+- agent: hr-vuln-reviewer
+  role: judge
+  as: verify
+- agent: hr-reporter
+  role: custom
+  as: report
+delegation:
+  mode: by-skill
+  max_parallel: 2
+  max_depth: 1
+  handoff: structured
+routing:
+  ioctl: analyst
+  imports: analyst
+  verify: verify
+  report: report
+  default: boss

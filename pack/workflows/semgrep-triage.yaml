@@ -1,0 +1,66 @@
+# The halo-re pack's static-sweep workflow: decompile to disk, scan the
+# decompiled C with opengrep (never OSS semgrep -- it strips the JSON fields
+# the triage reads), judge each finding class, and write the report.
+#   halo workflow run halo-re/semgrep-triage --input binary=/tmp/fastfat.sys
+name: semgrep-triage
+description: Scan a binary's decompiled code with C rules and triage every finding.
+prerequisites:
+  grants: [mcp:ghidra, bash]
+  capabilities: [static]
+inputs:
+  binary: {type: path, required: true, description: The binary to decompile and scan}
+  rules: {type: text, required: false, description: "Rules directory (default: the 0xdea community C rules)"}
+outputs:
+  report: {type: "artifact:re-finding-report", from: write, description: "Triaged findings -- real, false positive, needs more context -- with evidence lines"}
+stages:
+  - id: decompile
+    title: Decompile {binary} to disk
+    brief: >-
+      Decompile every function of {binary} to its own .c file (ghidrecomp or
+      the pack's Ghidra server); verify the file count matches the function
+      count before scanning.
+    role: hr-analyst
+    needs: [ghidra]
+    gives:
+      - {name: tree, kind: summary}
+    timeout_s: 1800
+  - id: scan
+    title: Scan the decompiled tree
+    brief: >-
+      Run opengrep over the decompiled tree with LC_ALL=C.UTF-8 and --json:
+      every finding must carry extra.lines and extra.metavars. Cap each rule
+      at 30 findings -- the judge's budget is real.
+    role: hr-analyst
+    after: [decompile]
+    takes:
+      - {from: decompile, take: tree}
+    gives:
+      - {name: findings, kind: summary}
+    budget_usd: 1
+  - id: judge
+    title: Triage the findings
+    brief: >-
+      For each finding: real bug, false positive, or needs more context --
+      accounting for the decompiler FP sources (auto-generated names like
+      local_18, reconstructed goto flow). Quote the line that decides it.
+    role: hr-vuln-reviewer
+    after: [scan]
+    takes:
+      - {from: scan, take: findings}
+    gives:
+      - {name: verdicts, kind: summary}
+    gate: human
+    budget_usd: 2
+  - id: write
+    title: Write the findings report
+    brief: >-
+      Compile the verdicts into the re-finding-report artifact: confirmed
+      real findings with evidence, false positives with the reason, and the
+      needs-more-context list as leads.
+    role: hr-reporter
+    after: [judge]
+    takes:
+      - {from: judge, take: verdicts}
+    gives:
+      - {name: report, kind: artifact}
+    retries: 1

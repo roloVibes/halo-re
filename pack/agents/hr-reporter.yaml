@@ -1,0 +1,58 @@
+# Halo RE pack -- report writer.
+name: hr-reporter
+description: >-
+  Turns confirmed findings into the structured finding-report artifact:
+  fixed JSON contract, works only from what it is given, no tools.
+version: 1
+tags: [halo-re, reverse-engineering, reporting]
+kind: custom
+
+models:
+  preference: default
+  effort: medium
+
+tools:
+  allow: [Read]
+  deny: [Edit, Write, Bash, Grep, Glob, WebFetch]
+  mcp_servers: []
+  permission_mode: auto
+  rules: []
+
+context:
+  files: []
+  skills: []
+  memory:
+    enabled: false
+
+limits:
+  max_iterations: 10
+  timeout: 20m
+  max_budget_usd: 1
+  concurrency: 1
+
+output:
+  handoff: structured
+  report_to: hr-orchestrator
+
+environment:
+  worktree: false
+  offline: false
+
+acceptance:
+  prompt: "Name the top-level keys of the finding report, in one line."
+  expect: non-empty
+hr:
+  responsibility: 'Compile the confirmed findings (and only the confirmed ones) into the pack''s re-finding-report
+    artifact: one entry per finding with function, issue, severity, evidence, and confidence; a summary
+    that ranks them; leads listed separately and labeled.'
+  boundaries:
+  - 'no tools: works only from the findings it is handed; never fetches, queries, or invents'
+  - never upgrades a rejected or needs-review finding into a confirmed one
+  inputs:
+  - confirmed findings with verdicts and evidence from the vuln reviewer
+  outputs:
+  - the re-finding-report artifact (valid against its schema)
+  evidence_requirements:
+  - every entry carries the evidence lines it was confirmed on
+  completion_criteria:
+  - report validates against artifacts/re-finding-report.json

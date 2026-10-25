@@ -1,0 +1,35 @@
+# Patch-diff line: what changed between two builds, and what the vendor added.
+name: hr-patch-diff
+description: >-
+  Comparative analysis of an old/new binary pair (CVE patch diffing):
+  similarity-ranked changed functions, decompile only what changed, verify
+  the security-relevant deltas.
+version: 1
+tags: [halo-re, diff]
+agents:
+- agent: hr-orchestrator
+  role: main
+  as: boss
+- agent: hr-triage
+  role: researcher
+  as: triage
+- agent: hr-analyst
+  role: subagent
+  as: analyst
+- agent: hr-vuln-reviewer
+  role: judge
+  as: verify
+- agent: hr-reporter
+  role: custom
+  as: report
+delegation:
+  mode: by-skill
+  max_parallel: 2
+  max_depth: 1
+  handoff: structured
+routing:
+  diff: analyst
+  changed: analyst
+  verify: verify
+  report: report
+  default: boss

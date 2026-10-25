@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ghidra": {
+      "command": "${halo_python}",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/ghidra_server.py"],
+      "env": {
+        "HALO_RE_PACK_ID": "halo-re"
+      }
+    }
+  }
+}

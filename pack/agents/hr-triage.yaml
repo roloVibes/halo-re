@@ -1,0 +1,65 @@
+# Halo RE pack -- binary triage analyst.
+name: hr-triage
+description: >-
+  First contact with a binary: CLI-first triage (file, nm, strings, otool/
+  objdump) before any Ghidra import, then platform/arch classification and a
+  risk-ranked inventory. Answers WHAT is this, WHERE does it run, and where
+  the analysis effort should go.
+version: 1
+tags: [halo-re, reverse-engineering, triage]
+kind: researcher
+
+models:
+  preference: default
+  effort: medium
+
+tools:
+  allow: [Read, Grep, Glob, Bash, WebFetch]
+  deny: [Edit, Write]
+  mcp_servers: []
+  permission_mode: auto
+  rules: []
+
+context:
+  files: []
+  skills:
+    - halo-re:binary-triage
+    - halo-re:token-budget-a-binary
+  memory:
+    enabled: false
+
+limits:
+  max_iterations: 30
+  timeout: 30m
+  max_budget_usd: 2
+  concurrency: 2
+
+output:
+  handoff: structured
+  report_to: hr-orchestrator
+
+environment:
+  worktree: false
+  offline: false
+
+acceptance:
+  prompt: "Given a 4 MB Windows .sys file, name the CLI tools you would run BEFORE importing it into Ghidra, in one line."
+  expect: non-empty
+hr:
+  responsibility: 'Classify the binary (platform, arch, format, type) and produce the initial inventory:
+    entry points, imports by security category, strings of interest, and a token-budget estimate that
+    decides per-function vs whole-binary strategy.'
+  boundaries:
+  - CLI triage first; a Ghidra import only when the orchestrator approves the target (analysis is expensive)
+  - read-only on the binary; no execution of the target, ever
+  inputs:
+  - target binary path
+  - any user context (suspected family, CVE, origin)
+  outputs:
+  - 'triage JSON: platform/arch/format/classification with evidence, import categories, strings of interest,
+    token budget verdict, recommended path (deep dive / targeted review / low priority)'
+  evidence_requirements:
+  - every classification claim cites the header field or string that proves it; keyword guesses are labeled
+    as such
+  completion_criteria:
+  - classification with evidence, import categories, and a budget verdict handed to the orchestrator

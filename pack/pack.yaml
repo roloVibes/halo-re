@@ -1,0 +1,66 @@
+# Halo RE — reverse-engineering capability pack manifest for Halo Harness.
+#
+# Contract: the shipped pack program (Halo 3.2.0.0+; validated against
+# halo 3.2.1.0). Ghidra itself is NEVER bundled (~1 GB): the pack ships an
+# MCP server that drives a local Ghidra install through pyghidra, a doctor
+# skill that finds and verifies the install, and a config key for its path.
+id: halo-re
+name: Halo RE
+version: 0.1.0
+description: >-
+  Binary reverse-engineering capability pack: a read-only Ghidra MCP server
+  (decompile, disassemble, search, xrefs, callgraph), procedural RE skills
+  distilled from agentic-RE training, kernel-driver and patch-diff audit
+  playbooks, and triage/analysis/report agent roles. Adds binary analysis
+  to Halo; owns no runtime, routing, or orchestration of its own.
+author: Pinball Genie LLC (github.com/roloVibes)
+license: All rights reserved — Pinball Genie LLC (see /LICENSE)
+halo_api:
+  # Extension API version (halo_harness.ext.API_VERSION), not the Halo version.
+  min: "1.0"
+halo:
+  # First Halo version with the pack registry + workflows (3.2.0.0).
+  min: 3.2.0.0
+capabilities:
+  - ghidra        # the pack's own read-only Ghidra MCP server (mcp/ghidra_server.py)
+  - triage        # binary platform/arch classification and inventory
+  - audit         # kernel-driver IOCTL, kernel-API and import-surface auditing
+  - diff          # patch/CVE comparative analysis (ghidriff similarity triage)
+  - static        # semgrep/opengrep scanning over decompiled code
+  - skills        # procedural RE know-how contributed as skills
+requires: []      # no hard pack dependencies
+contributes:
+  agents:
+    - agents/hr-orchestrator.yaml
+    - agents/hr-triage.yaml
+    - agents/hr-analyst.yaml
+    - agents/hr-vuln-reviewer.yaml
+    - agents/hr-reporter.yaml
+  teams:
+    - teams/hr-binary-triage.yaml
+    - teams/hr-kernel-driver-audit.yaml
+    - teams/hr-patch-diff.yaml
+    - teams/hr-semgrep-triage.yaml
+  skills: skills            # the plugin layout's own place
+  mcp:
+    - {name: ghidra, description: read-only Ghidra analysis (decompile, disassemble, search, xrefs, imports, callgraph)}
+  workflows: [triage, semgrep-triage]
+  artifacts: [re-finding-report]
+  events:
+    - {kind: re.finding, schema: events/re.finding.json, description: one confirmed or candidate finding from binary analysis}
+    - {kind: re.session, schema: events/re.session.json, description: a Ghidra analysis session opened or closed}
+permissions:
+  - mcp:ghidra
+  - bash        # the skills drive CLI RE tools (file/nm/strings/otool, ghidrecomp, opengrep)
+config:
+  schema:
+    properties:
+      ghidra_install_dir:
+        {type: string, description: "Path to a Ghidra install (the folder holding Ghidra/application.properties). Auto-detected when empty; the doctor skill verifies by effect."}
+      project_dir:
+        {type: string, description: "Where Ghidra projects live. MUST NOT contain a path element starting with a dot (Ghidra refuses it). Default ~/ghidra-projects."}
+    additionalProperties: false
+  defaults:
+    ghidra_install_dir: ""
+    project_dir: ""
+migrations: []

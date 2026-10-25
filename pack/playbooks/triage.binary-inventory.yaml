@@ -1,0 +1,51 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: triage.binary-inventory
+version: '1.0'
+title: CLI-first binary inventory
+category: triage
+phase: triage
+objective: Catalog what the binary is (format, arch, symbols, strings, imports) using local CLI tools
+  only, so the expensive Ghidra import decision is made on facts.
+methodology_refs:
+- halo-re:binary-triage
+assigned_role: triage
+prerequisites:
+- kind: binary
+  detail: target binary path, named by the user
+scope_requirements:
+  required_activities:
+  - static-analysis
+  - string-analysis
+  target_kinds:
+  - mach-o
+  - elf
+  - pe
+stages:
+- name: format-and-arch
+  description: file(1), then otool -hv / readelf -h / objdump headers for arch, endian, flags.
+  impact: read-only
+  expected_observations:
+  - format, arch, endianness, stripped or not
+- name: symbols-and-imports
+  description: nm -U / nm -D / dumpbin imports; bucket into memory/process/network/crypto categories.
+  impact: read-only
+  expected_observations:
+  - import categories with counts, entry points
+- name: strings-of-interest
+  description: strings for URLs, IPs, paths, registry keys, credential-looking material, narrative cover
+    stories.
+  impact: read-only
+  expected_observations:
+  - strings of interest with addresses where available
+- name: verdict
+  description: deep dive / targeted review / low priority, with the evidence for each.
+  impact: read-only
+  expected_observations:
+  - ranked verdict with evidence
+completion_criteria:
+- classification with evidence for every claim
+- verdict handed to the orchestrator
+finding_classification: n/a (inventory output; strings of interest are leads)
+judge_requirements:
+  required: false
+  independent_validation: false

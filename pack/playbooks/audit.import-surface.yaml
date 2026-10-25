@@ -1,0 +1,52 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: audit.import-surface
+version: '1.0'
+title: Import-surface risk model
+category: audit
+phase: audit
+objective: Tag every import with a security-relevance rating using EXACT symbol names (folding the trailing
+  A/W suffix) -- substring matching is systematically wrong on Windows kernel APIs -- and prove the matcher
+  with an adversarial self-check before trusting it.
+methodology_refs:
+- halo-re:binary-triage
+assigned_role: triage
+prerequisites:
+- kind: binary
+  detail: any binary with imports
+- kind: tool
+  detail: the pack's Ghidra MCP server (or CLI dumpbin/nm output)
+scope_requirements:
+  required_activities:
+  - static-analysis
+  - tool-driven-querying
+  target_kinds:
+  - pe-driver
+  - pe
+  - elf
+  - mach-o
+stages:
+- name: collect-imports
+  description: Full import table (paged list_imports, or CLI); exact symbol names.
+  impact: read-only
+  expected_observations:
+  - complete import list
+- name: adversarial-selfcheck
+  description: 'Before trusting the tagger: run the known substring traps through it and print the verdicts;
+    a matcher that fails the trap is fixed, not shipped. (ExAllocatePoolWithQuotaTag contains alloca;
+    ExGetSharedWaiterCount contains gets; ExLocalTimeToSystemTime contains system; a createfile substring
+    misses CreateFileW.)'
+  impact: read-only
+  expected_observations:
+  - 'self-check table: symbol, naive verdict, exact-name verdict'
+- name: tag-and-rank
+  description: Tag critical/high/medium/low by exact name (+ A/W folding); rank the table; count by category.
+  impact: read-only
+  expected_observations:
+  - tagged import table with counts
+completion_criteria:
+- adversarial self-check printed and passed
+- tagged table with the risky surface ranked
+finding_classification: n/a (surface model, feeds the audit playbooks)
+judge_requirements:
+  required: false
+  independent_validation: false

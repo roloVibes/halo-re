@@ -1,0 +1,69 @@
+# The halo-re pack's triage workflow (3.2.0.0 R5, docs/WORKFLOWS.md):
+# one binary in -- a CLI-first inventory, an evidence-checked classification
+# (every claim cites the header field or string that proves it, keyword
+# guesses are dropped at the gate), and one triage report artifact.
+# It compiles to an Orchestra goal:
+#   halo workflow run halo-re/triage --input binary=/tmp/driver.sys
+name: triage
+description: Triage one binary -- inventory, evidence-checked classification, ranked verdict report.
+prerequisites:
+  grants: [mcp:ghidra]
+  capabilities: [triage]
+inputs:
+  binary: {type: path, required: true, description: "The binary to triage (never executed, only read)"}
+  context: {type: text, required: false, description: "Known context -- origin, suspected family, advisory text"}
+outputs:
+  report: {type: "artifact:re-finding-report", from: write, description: "The triage verdict with evidence; strings of interest are leads, never findings"}
+stages:
+  - id: inventory
+    title: Inventory {binary}
+    brief: >-
+      Run the CLI-first inventory over {binary} (file, nm/objdump/otool, strings):
+      format, arch, symbols, imports by category, strings of interest, and a
+      token-budget estimate. Nothing is imported into Ghidra in this stage.
+    role: hr-triage
+    needs: [triage]
+    gives:
+      - {name: notes, kind: summary}
+    retries: 1
+    timeout_s: 900
+  - id: classify
+    title: Classify {binary} with evidence
+    brief: >-
+      From the inventory notes: WHERE does it run and WHAT is it, each claim
+      citing the header field, symbol or string that proves it, with a
+      confidence and an alternative you considered and rejected.
+    role: hr-triage
+    after: [inventory]
+    takes:
+      - {from: inventory, take: notes}
+    gives:
+      - {name: classification, kind: summary}
+    budget_usd: 1
+  - id: judge
+    title: Judge the classification
+    brief: >-
+      Keep the claims that carry evidence, drop keyword guesses and anything
+      the strings do not actually support. Reply with nothing when nothing
+      survives.
+    role: hr-vuln-reviewer
+    after: [classify]
+    takes:
+      - {from: classify, take: classification}
+    gives:
+      - {name: verdict, kind: summary}
+    gate: human
+    budget_usd: 0.5
+  - id: write
+    title: Write the triage report
+    brief: >-
+      Turn the verdict into the re-finding-report artifact: classification
+      with evidence, ranked verdict (deep dive / targeted review / low
+      priority), strings of interest as labeled leads, and the next step.
+    role: hr-reporter
+    after: [judge]
+    takes:
+      - {from: judge, take: verdict}
+    gives:
+      - {name: report, kind: artifact}
+    retries: 1

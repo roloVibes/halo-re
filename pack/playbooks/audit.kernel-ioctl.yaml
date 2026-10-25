@@ -1,0 +1,61 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: audit.kernel-ioctl
+version: '1.0'
+title: Kernel driver IOCTL audit
+category: audit
+phase: audit
+objective: Enumerate the driver's IRP dispatch table and every IOCTL code with its handler, then audit
+  each handler against the V0-V5 vulnerability pattern table, quoting the decisive decompiled lines.
+methodology_refs:
+- halo-re:kernel-driver-ioctl-audit
+- CWE-822
+- CWE-1284
+- CWE-787
+- CWE-782
+assigned_role: analyst
+prerequisites:
+- kind: binary
+  detail: Windows .sys driver
+- kind: tool
+  detail: the pack's Ghidra MCP server with the driver imported
+scope_requirements:
+  required_activities:
+  - decompilation-review
+  - disassembly-review
+  - tool-driven-querying
+  target_kinds:
+  - pe-driver
+stages:
+- name: find-entry
+  description: DriverEntry with fallbacks (GsDriverEntry, entry -- the CRT stub tail-calls the real one).
+  impact: read-only
+  expected_observations:
+  - entry function found, address recorded
+- name: dispatch-table
+  description: Writes into DRIVER_OBJECT.MajorFunction at +0x70 (x64); decode slot (offset-0x70)/8; loop
+    form fills consecutive slots; no writes means decompile callees.
+  impact: read-only
+  expected_observations:
+  - IRP major code to handler map
+- name: ioctl-map
+  description: Control code at IO_STACK_LOCATION +0x18 (x64); walk equality/case checks on constants;
+    reject NTSTATUS-range values; decode CTL_CODE fields.
+  impact: read-only
+  expected_observations:
+  - IOCTL code to handler table with device/function/method decoded
+- name: handler-audit
+  description: 'Per handler: pattern table check (METHOD_NEITHER without probe; no length comparison;
+    unchecked memcpy; dangerous APIs). Thunks (<5 lines) -- follow the callee. Probes present = mitigating
+    info, not a finding.'
+  impact: read-only
+  expected_observations:
+  - per-handler verdict with quoted lines
+  limits:
+    max_functions: 40
+completion_criteria:
+- every dispatch handler audited or the gap named
+- a handler is reported clean only with a probe AND a length comparison cited
+finding_classification: V0-V5 pattern classes with CWEs
+judge_requirements:
+  required: true
+  independent_validation: true

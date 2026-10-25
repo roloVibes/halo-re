@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rolovibes.example/halo-re/artifacts/re-finding-report.json",
+  "title": "RE finding report",
+  "description": "The report artifact the hr-reporter produces from confirmed findings only. Leads are listed separately and never mixed into findings.",
+  "type": "object",
+  "required": ["binary", "generated_by", "findings", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "binary": { "type": "string", "description": "binary name as the Ghidra session knows it" },
+    "generated_by": { "type": "string" },
+    "analysis_path": { "type": "string", "description": "the playbook path that produced this (e.g. audit.kernel-ioctl)" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["function", "issue", "severity", "evidence", "confidence"],
+        "additionalProperties": false,
+        "properties": {
+          "function": { "type": "string" },
+          "issue": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+          "evidence": { "type": "string", "description": "the decisive decompiled line(s), quoted" },
+          "cwe": { "type": "string", "description": "e.g. CWE-787, when the pattern class maps" },
+          "confidence": { "type": "string", "enum": ["confirmed", "probable"] }
+        }
+      }
+    },
+    "leads": {
+      "type": "array",
+      "description": "unverified observations worth a follow-up pass; never reported as findings",
+      "items": {
+        "type": "object",
+        "required": ["function", "observation"],
+        "additionalProperties": false,
+        "properties": {
+          "function": { "type": "string" },
+          "observation": { "type": "string" }
+        }
+      }
+    },
+    "summary": { "type": "string", "description": "ranks the findings and names the next step" }
+  }
+}

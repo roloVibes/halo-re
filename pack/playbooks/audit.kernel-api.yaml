@@ -1,0 +1,63 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: audit.kernel-api
+version: '1.0'
+title: Kernel API capability audit
+category: audit
+phase: audit
+objective: 'Score the binary''s attack surface from its import table: bucket every import into weighted
+  capability classes, xref the dangerous ones to their callers, and decompile the hot callers so the score
+  is evidence-backed.'
+methodology_refs:
+- halo-re:kernel-api-audit
+assigned_role: analyst
+prerequisites:
+- kind: binary
+  detail: any binary with an import table (.sys, .so, ELF)
+- kind: tool
+  detail: the pack's Ghidra MCP server with the binary imported
+scope_requirements:
+  required_activities:
+  - decompilation-review
+  - tool-driven-querying
+  target_kinds:
+  - pe-driver
+  - elf
+  - mach-o
+stages:
+- name: page-imports
+  description: list_imports with offset/limit until a short page; nothing dropped.
+  impact: read-only
+  expected_observations:
+  - complete import table with total count
+- name: capability-classes
+  description: 'Bucket imports: ARBITRARY_MEMORY 10, PROCESS_MANIPULATION 8, HOOK_CALLBACK 7, RAW_IO 6,
+    REGISTRY 4, CRYPTO 3, USER_MEMORY 3 (mitigating), ALLOCATION 2, SYNCHRONIZATION 1.'
+  impact: read-only
+  expected_observations:
+  - class to imports map
+- name: xref-hot-imports
+  description: For every weight>=4 import, xref its __imp_<Name> label to the calling functions (not the
+    bare external symbol).
+  impact: read-only
+  expected_observations:
+  - import to calling functions map
+- name: evidence-pull
+  description: Decompile the hot callers and quote the lines that use the dangerous API; an import with
+    no call site is noise.
+  impact: read-only
+  expected_observations:
+  - quoted evidence per hot caller
+  limits:
+    max_functions: 25
+- name: score
+  description: sum(distinct class weights) + 2 x distinct high-risk callers, capped 100. >=25 deep dive,
+    10-24 targeted review, <10 low priority.
+  impact: read-only
+  expected_observations:
+  - risk score, verdict, the classes that drove it
+completion_criteria:
+- score with the evidence trail from import to quoted call site
+finding_classification: capability-class findings with weights
+judge_requirements:
+  required: true
+  independent_validation: false

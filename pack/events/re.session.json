@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "re.session event",
+  "description": "A Ghidra analysis session opened or closed (or failed to), published to the Studio live feed.",
+  "type": "object",
+  "required": ["state"],
+  "additionalProperties": false,
+  "properties": {
+    "state": { "type": "string", "enum": ["opened", "failed", "closed"] },
+    "install_dir": { "type": "string" },
+    "project_dir": { "type": "string" },
+    "problem": { "type": "string", "description": "when state=failed, the actionable remedy" }
+  }
+}

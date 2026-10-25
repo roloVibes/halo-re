@@ -1,0 +1,64 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: diff.patch-cve
+version: '1.0'
+title: Patch diff analysis
+category: diff
+phase: diff
+objective: Find what the vendor changed between an old and a new build, ranked by the diff's similarity
+  field, then decompile only the changed functions and characterize the fix -- and what the OLD version
+  lacked.
+methodology_refs:
+- halo-re:patch-diff-analysis
+assigned_role: analyst
+prerequisites:
+- kind: binary
+  detail: old (vulnerable) build
+- kind: patched-binary
+  detail: new (fixed) build
+- kind: tool
+  detail: ghidriff (uvx ghidriff) for the diff, or a pre-computed ghidriff JSON
+- kind: tool
+  detail: the pack's Ghidra MCP server with both builds imported
+scope_requirements:
+  required_activities:
+  - diff-analysis
+  - decompilation-review
+  target_kinds:
+  - mach-o
+  - elf
+  - pe
+stages:
+- name: generate-or-load-diff
+  description: uvx ghidriff --engine VersionTrackingDiff --output-path <dir> old new; or load the provided
+    JSON.
+  impact: low-impact
+  expected_observations:
+  - diff artifact on disk or loaded
+- name: similarity-triage
+  description: List functions with similarity < 1.0 sorted ascending (most changed first); prefer named
+    over sub_/FUN_ placeholders; track named_changed vs generic_changed separately.
+  impact: read-only
+  expected_observations:
+  - ranked changed-function list with counts
+- name: what-was-added
+  description: 'Decompile the changed functions in both builds and ask: what validation was added (full-string
+    checks, add_overflow, sign-bit, audit logging)? A 0.35 similarity means a REWRITE -- characterize
+    the design change, do not byte-diff.'
+  impact: read-only
+  expected_observations:
+  - per-function delta description with quoted lines
+  limits:
+    max_functions: 20
+- name: cross-check
+  description: 'If an advisory exists: does the diff-guided route name the same functions? Disagreement
+    is a finding about the analysis, not the vendor.'
+  impact: read-only
+  expected_observations:
+  - agreement or named discrepancy with the advisory
+completion_criteria:
+- ranked changed list + per-function delta characterization
+- the vulnerability mechanism of the OLD build stated with evidence
+finding_classification: the vulnerability class the patch fixes (with CWE when mappable)
+judge_requirements:
+  required: true
+  independent_validation: true

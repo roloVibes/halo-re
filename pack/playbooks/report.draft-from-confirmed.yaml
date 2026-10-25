@@ -1,0 +1,38 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: report.draft-from-confirmed
+version: '1.0'
+title: Finding report from confirmed results
+category: reporting
+phase: reporting
+objective: 'Compile the vuln reviewer''s confirmed findings into the re-finding-report artifact: one entry
+  per finding with evidence and confidence, leads listed separately and labeled, and a summary that ranks
+  and names the next step.'
+methodology_refs:
+- halo-re pack artifacts/re-finding-report.json
+assigned_role: reporter
+prerequisites:
+- kind: documentation
+  detail: confirmed findings with verdicts and evidence from the vuln reviewer
+scope_requirements:
+  required_activities:
+  - reporting
+  target_kinds: []
+stages:
+- name: compile
+  description: Fill the artifact from the confirmed findings only; rejected and needs-review items never
+    enter findings.
+  impact: read-only
+  expected_observations:
+  - complete artifact draft
+- name: validate
+  description: The artifact validates against artifacts/re-finding-report.json; every entry carries its
+    evidence.
+  impact: read-only
+  expected_observations:
+  - schema validation clean
+completion_criteria:
+- artifact validates; summary ranks the findings and names the next step
+finding_classification: n/a (the report itself)
+judge_requirements:
+  required: false
+  independent_validation: false

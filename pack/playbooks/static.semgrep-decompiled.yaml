@@ -1,0 +1,62 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: static.semgrep-decompiled
+version: '1.0'
+title: Semgrep on decompiled code
+category: static
+phase: static
+objective: 'Run C rules over the Ghidra decompiled tree with opengrep (NOT OSS semgrep: it strips the
+  fields the triage reads from JSON), then triage each finding with a bounded budget, accounting for decompiler-specific
+  false-positive sources.'
+methodology_refs:
+- halo-re:semgrep-decompiled
+- CWE-416
+- CWE-190
+- CWE-787
+assigned_role: analyst
+prerequisites:
+- kind: decompiled-tree
+  detail: ghidrecomp output (one .c per function)
+- kind: tool
+  detail: opengrep binary with LC_ALL=C.UTF-8
+scope_requirements:
+  required_activities:
+  - static-analysis
+  - decompilation-review
+  target_kinds:
+  - pe-driver
+  - elf
+  - mach-o
+stages:
+- name: decompile-to-disk
+  description: ghidrecomp <binary> -o <outdir> (or accept an existing tree); verify the file count matches
+    the function count.
+  impact: low-impact
+  expected_observations:
+  - decompiled tree with per-function .c files
+- name: scan
+  description: opengrep scan --config <rules>/c/ <outdir> --no-git-ignore --json; OSS semgrep is forbidden
+    here (it redacts extra.lines/metavars).
+  impact: read-only
+  expected_observations:
+  - findings JSON with extra.lines and extra.metavars populated
+- name: fp-taxonomy
+  description: 'Before triage: account for decompiler FP sources -- auto-generated names (local_18) and
+    reconstructed goto/label flow.'
+  impact: read-only
+  expected_observations:
+  - findings bucketed likely-real vs likely-FP with reasons
+- name: triage
+  description: 'Per finding (capped, e.g. 30 per rule): real bug / FP / needs more context; summary count
+    by rule id and severity.'
+  impact: read-only
+  expected_observations:
+  - verdict per finding with the reason
+  limits:
+    max_functions: 30
+completion_criteria:
+- every scanned finding triaged or explicitly deferred with the reason
+- summary counts that match the verdicts
+finding_classification: semgrep rule classes with CWEs where mapped
+judge_requirements:
+  required: true
+  independent_validation: true

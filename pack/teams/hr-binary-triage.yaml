@@ -1,0 +1,29 @@
+# Triage line: classify and budget a binary before anything expensive.
+name: hr-binary-triage
+description: >-
+  First-contact line for an unknown binary: CLI-first triage, platform and
+  classification with evidence, and a token-budget verdict that decides
+  per-function vs whole-binary strategy.
+version: 1
+tags: [halo-re, triage]
+agents:
+- agent: hr-orchestrator
+  role: main
+  as: boss
+- agent: hr-triage
+  role: researcher
+  as: triage
+- agent: hr-reporter
+  role: custom
+  as: report
+delegation:
+  mode: by-skill
+  max_parallel: 2
+  max_depth: 1
+  handoff: structured
+routing:
+  classify: triage
+  inventory: triage
+  budget: triage
+  report: report
+  default: boss
