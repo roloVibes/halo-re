@@ -45,16 +45,35 @@ COMMON_INSTALL_DIRS = [
 
 def _discovered_install_dirs() -> list:
     """Glob for extracted Ghidra releases (ghidra_*_PUBLIC) under the home,
-    Documents and Downloads trees, up to three levels deep. Finds zip-extract
-    installs wherever the user unpacked them, without naming any layout."""
+    Documents, Downloads and the pack's tools dir, up to three levels deep.
+    Finds zip-extract installs wherever the user unpacked them (or wherever
+    the on-demand installer put them), without naming any layout."""
     home = Path.home()
+    bases = [home / "Documents", home / "Downloads", home / "halo-re-tools", home]
+    # the pack's configured tools dir, when set (where install_tools.py lands)
+    try:
+        import subprocess  # noqa: WPS433
+
+        out = subprocess.run(
+            ["halo", "config", "get", "packs.settings.halo-re.tools_dir"],
+            capture_output=True, text=True, timeout=30,
+        )
+        value = out.stdout.strip().strip('"')
+        if out.returncode == 0 and value and value not in ("null", ""):
+            bases.insert(0, Path(value).expanduser())
+    except Exception:
+        pass
     hits: list = []
     patterns = ("ghidra_*_PUBLIC", "*/ghidra_*_PUBLIC",
                 "*/*/ghidra_*_PUBLIC", "*/*/*/ghidra_*_PUBLIC")
-    for base in (home / "Documents", home / "Downloads", home):
+    seen: set = set()
+    for base in bases:
         try:
             for pattern in patterns:
-                hits.extend(p for p in base.glob(pattern) if p.is_dir())
+                for p in base.glob(pattern):
+                    if p.is_dir() and str(p) not in seen:
+                        seen.add(str(p))
+                        hits.append(p)
         except OSError:
             continue
     return [str(h) for h in hits]
@@ -313,8 +332,20 @@ class AnalysisSession:
             )
         dec = self.decompilers[self._name_of(program)]
         result = dec.decompileFunction(func, 60, None)
-        if result.getErrorMessage() != "":  # the measured success check
+        # The measured success check is the error message, but a native
+        # decompiler that cannot launch (e.g. the exec bit lost in a zip
+        # extract) returns decompiledFunction=None WITH an empty message --
+        # check both.
+        if result.getErrorMessage() != "":
             raise GhidraProblem(f"decompilation failed: {result.getErrorMessage()}")
+        if result.decompiledFunction is None:
+            raise GhidraProblem(
+                "decompilation produced no result with an empty error message -- the "
+                "decompiler native probably cannot launch. Check that "
+                "<install>/Ghidra/Features/Decompiler/os/<platform>/decompile is "
+                "executable (chmod +x); the ghidra-doctor installer does this, a manual "
+                "unzip does not."
+            )
         code = str(result.decompiledFunction.getC())
         lines = code.splitlines()
         if len(lines) > max_lines:

@@ -64,3 +64,18 @@ pack's own smoke tests against Ghidra 12.1.2 on arm64 macOS (2026-10-25).
 - FastMCP builds each tool's schema from `inspect.signature`: a
   `*args/**kwargs` wrapper publishes a schema demanding literal
   `args`/`kwargs` (measured in the smoke test) — use `functools.wraps`.
+
+## The on-demand installer (measured 2026-10-25, live downloads)
+
+- **Ghidra 12.2 ships no macOS decompiler natives at all** — `Decompiler/os/`
+  holds only `linux_x86_64` and `win_x86_64`. Same for 12.1.3 and 12.1.4:
+  **macOS natives stopped after 12.1.2**. The installer walks back through
+  previous releases until one verifies by effect for the running platform.
+- **Release zips do not preserve the executable bit.** The extracted
+  `Decompiler/os/<plat>/decompile` is `-rw-r--r--`, and pyghidra then fails
+  decompilation with `decompiledFunction=None` AND an **empty** error
+  message — the least diagnosable failure in the whole stack. The installer
+  chmods the launchers and every native under `Ghidra/Features/*/os/*`.
+- REA's release zip is a **single FILE** (`REA-<ver>.exe`, ~98 MB,
+  Windows), not a directory — an extractor that assumes a top-level
+  directory crashes on it.

@@ -22,17 +22,33 @@ halo pack enable halo-re --grant mcp:ghidra --grant bash
 | **2 Halo workflows** | `halo workflow run halo-re/triage --input binary=<path>` and `halo-re/semgrep-triage` — multi-stage, judged, gated pipelines that compile to Orchestra goals. |
 | **Artifacts + events** | The `re-finding-report` artifact schema and `re.finding` / `re.session` events for the Studio live feed. |
 
-## Ghidra: needed, never bundled
+## Ghidra: needed, never bundled — but downloadable on demand
 
-Ghidra is ~1 GB and licensed Apache-2.0 — the pack does not ship it. It
-ships everything else: an install **doctor** (detects by effect — no
-`which ghidra`, there is no such binary), a config key for the install
-path (`halo pack config halo-re ghidra_install_dir <path>`), and the MCP
-server that drives a local install through pyghidra. Python deps:
-`pyghidra` + `mcp>=1.2,<2` in the Python Halo runs under.
+Ghidra is ~570 MB and licensed Apache-2.0 — the pack does not ship it. It
+ships everything else:
+
+- an install **doctor** (detects by effect — no `which ghidra`, there is
+  no such binary; auto-detect globs `ghidra_*_PUBLIC` under `~/Documents`,
+  `~/Downloads`, `~` and the tools dir);
+- an **on-demand installer**: when no install is found, the doctor offers
+  "download the latest official release?" and runs
+  `install_tools.py --tool ghidra --yes` — it downloads from
+  github.com/NationalSecurityAgency/ghidra/releases, checks the JDK
+  (21+), extracts into the tools dir (default `~/halo-re-tools`, config
+  key `tools_dir`), fixes the exec bits release zips lose, verifies by
+  effect, and persists the path (`halo config set
+  packs.settings.halo-re.ghidra_install_dir <path>`) so the pack always
+  knows where it is. **Platform fallback included**: a release that ships
+  no natives for your OS (measured: Ghidra 12.2+ dropped the macOS
+  decompiler) is rejected and the previous release tried automatically.
+- the same installer handles the optional **REA** (Reverse Engineer
+  Anything) release: `--tool rea --yes` (~98 MB, MIT, Windows exe).
+- Python deps for the MCP server: `pyghidra` + `mcp>=1.2,<2` in the
+  Python Halo runs under (the doctor names the exact command).
 
 Every measured trap — dot-prefixed project paths, GHIDRA_INSTALL_DIR
-inheritance, the fresh-import analysis gap, the two-stage start — is in
+inheritance, the fresh-import analysis gap, the two-stage start, the zip
+exec-bit loss — is in
 [pack/docs/GHIDRA-NOTES.md](pack/docs/GHIDRA-NOTES.md) and baked into the
 code.
 

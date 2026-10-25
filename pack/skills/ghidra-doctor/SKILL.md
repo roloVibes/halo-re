@@ -54,32 +54,50 @@ pack's own MCP server (tools surface in a Halo session under the
      where `<plat>` is `mac_arm_64` / `mac_x86_64` / `win_x86_64` / `win_x86`
      / `linux_arm64` / `linux_x86_64` for this host. A decompiler native
      for a *different* platform is a failed check.
-3. **If no candidate passes**, set the pack config key to a good install:
-   `halo pack config halo-re ghidra_install_dir <path>` (the env var works
-   for one-off runs, but config survives across sessions). Do not export
-   `GHIDRA_INSTALL_DIR` mid-session expecting the running server to pick
-   it up — it must be set before `pyghidra.start()`, i.e. before the
-   session opens; restart the session after changing it.
-4. **Check the Python deps** with `python -c "import pyghidra, mcp"`.
+3. **If no candidate passes, OFFER THE DOWNLOAD** — the pack can install
+   the official release on demand. Ask the user first (it is ~570 MB):
+   "No Ghidra install found. Download the latest official release
+   (Ghidra 12.x, ~570 MB) into ~/halo-re-tools?" When they say yes, run
+   `${CLAUDE_SKILL_DIR}/scripts/install_tools.py --tool ghidra --yes`
+   (run with `--check` first to show the exact version/size without
+   downloading). The script downloads from
+   github.com/NationalSecurityAgency/ghidra/releases, extracts into the
+   tools dir (config key `tools_dir`, default `~/halo-re-tools`), verifies
+   the install BY EFFECT, and persists the path itself:
+   `halo config set packs.settings.halo-re.ghidra_install_dir <path>`.
+   It also checks `java -version` (Ghidra needs JDK 21+; Temurin:
+   https://adoptium.net) and names the remedy when the JDK is missing or
+   old. The optional REA tool (Reverse Engineer Anything,
+   github.com/ReverseEngineer-Anything/REA-Github) installs the same way:
+   `--tool rea --yes` (~40 MB, MIT); its path lands in `rea_dir`.
+4. **If the user declines the download**, set the path by hand to an
+   install they already have:
+   `halo config set packs.settings.halo-re.ghidra_install_dir <path>`
+   (the `GHIDRA_INSTALL_DIR` env var works for one-off runs, but config
+   survives across sessions). Do not export `GHIDRA_INSTALL_DIR`
+   mid-session expecting the running server to pick it up — it must be set
+   before `pyghidra.start()`, i.e. before the session opens; restart the
+   session after changing it.
+5. **Check the Python deps** with `python -c "import pyghidra, mcp"`.
    Exit code 0 = pass. On failure, install into the *same Python Halo
    runs the pack with* (match `sys.executable`): 
    `python -m pip install pyghidra "mcp>=1.2,<2"`. The `mcp<2` pin is
    deliberate — newer majors break the FastMCP import the server uses.
-5. **Validate the project dir**: it must not contain any dot-prefixed
+6. **Validate the project dir**: it must not contain any dot-prefixed
    path element — Ghidra throws
    `IllegalArgumentException: Path element starting with '.' is not
    permitted`, which is why projects never live under `~/.local/share`
    or `~/.halo`. Default (and correct fallback): `~/ghidra-projects`.
    Override with the pack config key `project_dir`.
-6. **Grant the tools** if not already granted:
+7. **Grant the tools** if not already granted:
    `halo pack enable halo-re --grant mcp:ghidra`.
-7. **Smoke test through the real server**: call `list_binaries` (expect
+8. **Smoke test through the real server**: call `list_binaries` (expect
    `status: ok`, even with an empty list), then
    `open_binary` with a small known-good binary such as `/bin/ls` (first
    open runs full analysis, ~1 min), then `decompile_function` with
    `main`. A pass is a returned `code` field containing C — not merely
    the absence of an error.
-8. **Report** the verdict as the JSON below, including every check's
+9. **Report** the verdict as the JSON below, including every check's
    literal result (path, version string, exit code) — not a bare "OK".
 
 Verification table — don't assume, assert instead:

@@ -6,7 +6,7 @@
 # skill that finds and verifies the install, and a config key for its path.
 id: halo-re
 name: Halo RE
-version: 0.1.0
+version: 0.2.0
 description: >-
   Binary reverse-engineering capability pack: a read-only Ghidra MCP server
   (decompile, disassemble, search, xrefs, callgraph), procedural RE skills
@@ -56,11 +56,17 @@ config:
   schema:
     properties:
       ghidra_install_dir:
-        {type: string, description: "Path to a Ghidra install (the folder holding Ghidra/application.properties). Auto-detected when empty; the doctor skill verifies by effect."}
+        {type: string, description: "Path to a Ghidra install (the folder holding Ghidra/application.properties). Auto-detected when empty; the doctor skill verifies by effect and can download the official release on demand."}
       project_dir:
         {type: string, description: "Where Ghidra projects live. MUST NOT contain a path element starting with a dot (Ghidra refuses it). Default ~/ghidra-projects."}
+      tools_dir:
+        {type: string, description: "Where the on-demand installer puts downloads (default ~/halo-re-tools). The Ghidra/REA release zips land under <tools_dir>/downloads/."}
+      rea_dir:
+        {type: string, description: "Where the optional REA (Reverse Engineer Anything) release was extracted, if you installed it."}
     additionalProperties: false
   defaults:
     ghidra_install_dir: ""
     project_dir: ""
+    tools_dir: ""
+    rea_dir: ""
 migrations: []
