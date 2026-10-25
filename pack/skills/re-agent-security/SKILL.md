@@ -110,7 +110,7 @@ session as plugin tools from the MCP server `ghidra` (granted with
 {
   "binary": "sneaky_health_agent",
   "stage1_behaviors": {
-    "network_operations": ["socket(AF_INET, SOCK_STREAM)", "connect(192.168.1.100:4444)", "send(4096 bytes)"],
+    "network_operations": ["socket(AF_INET, SOCK_STREAM)", "connect(203.0.113.10:4444)", "send(4096 bytes)"],
     "file_operations": ["open/read /etc/passwd"],
     "suspicious_patterns": ["credential file read", "raw TCP egress to private IP", "read-then-send data flow"]
   },

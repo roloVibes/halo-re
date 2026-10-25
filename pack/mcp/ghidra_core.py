@@ -31,17 +31,33 @@ from typing import Optional
 
 # Common install locations checked when neither GHIDRA_INSTALL_DIR nor the
 # pack's config names one. Windows-style roots are included so the same
-# detection runs on the Windows runner.
+# detection runs on the Windows runner. Zip-extract installs under the home
+# tree are found by globbing (see _discovered_install_dirs), so no one's
+# personal layout is hardcoded.
 COMMON_INSTALL_DIRS = [
-    # rolo's Mac (measured 2026-08-13): both arm64-native installs live here
-    "/Users/rolo/Documents/obsidian/vibes/github/ghidra_12.1.2_PUBLIC",
-    "/Users/rolo/Documents/obsidian/vibes/github/ghidra_11.3.2_PUBLIC",
     # course devcontainer
     "/ghidra",
     "/opt/ghidra",
     "/usr/share/ghidra",
     "C:/Program Files/ghidra",
 ]
+
+
+def _discovered_install_dirs() -> list:
+    """Glob for extracted Ghidra releases (ghidra_*_PUBLIC) under the home,
+    Documents and Downloads trees, up to three levels deep. Finds zip-extract
+    installs wherever the user unpacked them, without naming any layout."""
+    home = Path.home()
+    hits: list = []
+    patterns = ("ghidra_*_PUBLIC", "*/ghidra_*_PUBLIC",
+                "*/*/ghidra_*_PUBLIC", "*/*/*/ghidra_*_PUBLIC")
+    for base in (home / "Documents", home / "Downloads", home):
+        try:
+            for pattern in patterns:
+                hits.extend(p for p in base.glob(pattern) if p.is_dir())
+        except OSError:
+            continue
+    return [str(h) for h in hits]
 
 DEFAULT_PROJECT_DIR = str(Path.home() / "ghidra-projects")
 
@@ -95,6 +111,7 @@ def detect_install(explicit: str = "", env: Optional[dict] = None) -> str:
     if env.get("GHIDRA_INSTALL_DIR"):
         candidates.append(env["GHIDRA_INSTALL_DIR"])
     candidates.extend(COMMON_INSTALL_DIRS)
+    candidates.extend(_discovered_install_dirs())
 
     problems: list[str] = []
     for cand in candidates:

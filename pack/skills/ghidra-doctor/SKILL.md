@@ -39,11 +39,11 @@ pack's own MCP server (tools surface in a Halo session under the
 1. **Resolve the install — in this exact order** (matches
    `ghidra_core.detect_install`): (a) the pack config key
    `halo pack config halo-re ghidra_install_dir <path>`, (b) the
-   `GHIDRA_INSTALL_DIR` environment variable, (c) common locations:
-   `/Users/rolo/Documents/obsidian/vibes/github/ghidra_12.1.2_PUBLIC`,
-   `/Users/rolo/Documents/obsidian/vibes/github/ghidra_11.3.2_PUBLIC`,
-   `/ghidra`, `/opt/ghidra`, `/usr/share/ghidra`,
-   `C:/Program Files/ghidra`. If a candidate fails, collect *why* and move
+   `GHIDRA_INSTALL_DIR` environment variable, (c) common system locations
+   (`/ghidra`, `/opt/ghidra`, `/usr/share/ghidra`, `C:/Program Files/ghidra`),
+   then (d) a glob for `ghidra_*_PUBLIC` directories up to three levels under
+   `~/Documents`, `~/Downloads` and `~` (zip-extract installs live wherever
+   the user unpacked them). If a candidate fails, collect *why* and move
    to the next; the final error must list every candidate it tried.
 2. **Verify by effect, never by `which ghidra`** (no such binary exists).
    For the resolved root, assert all three:
@@ -104,7 +104,7 @@ Verification table — don't assume, assert instead:
     "resolved_via": "pack-config | env | common-location",
     "verified_by": ["application.properties", "support/analyzeHeadless", "Decompiler/os/mac_arm_64/decompile"]
   },
-  "project_dir": "/Users/rolo/ghidra-projects",
+  "project_dir": "~/ghidra-projects",
   "project_dir_valid": true,
   "deps": {"pyghidra": true, "mcp_pinned": ">=1.2,<2", "import_check_exit_code": 0},
   "smoke_test": {"binary": "/bin/ls", "function": "main", "decompiled": true},
