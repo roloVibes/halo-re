@@ -384,8 +384,12 @@ def gen_callgraph(seed: str, direction: str = "callers", max_edges: int = 60, bi
 # ---------------------------------------------------------------------------
 
 def build_server():
-    from mcp.server.fastmcp import FastMCP
-    from mcp.server import Server
+    try:
+        from mcp.server.fastmcp import FastMCP  # mcp 1.x
+    except ImportError:
+        # mcp 2.x renamed FastMCP -> MCPServer (same name=/lifespan=/
+        # .tool()/.run() surface for this server's usage)
+        from mcp.server.mcpserver import MCPServer as FastMCP
 
     mcp = FastMCP("halo-re-ghidra", lifespan=_lifespan)
 
@@ -406,8 +410,6 @@ def build_server():
         wrapped = _tool(fn)
         mcp.tool()(wrapped)
 
-    # silence the unused-import lint for Server (referenced in the type hint)
-    _ = Server
     return mcp
 
 

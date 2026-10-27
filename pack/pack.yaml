@@ -6,7 +6,7 @@
 # skill that finds and verifies the install, and a config key for its path.
 id: halo-re
 name: Halo RE
-version: 0.2.0
+version: 0.2.1
 description: >-
   Binary reverse-engineering capability pack: a read-only Ghidra MCP server
   (decompile, disassemble, search, xrefs, callgraph), procedural RE skills

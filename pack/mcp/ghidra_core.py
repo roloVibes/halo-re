@@ -181,8 +181,9 @@ class AnalysisSession:
         except ImportError as exc:
             raise GhidraProblem(
                 f"pyghidra is not importable from this Python ({sys.executable}): {exc}\n"
-                "Fix: install the deps into the Python Halo runs the pack with, e.g.\n"
-                '  python -m pip install pyghidra "mcp>=1.2,<2"\n'
+                "Fix: install pyghidra into the Python Halo runs the pack with, e.g.\n"
+                "  python -m pip install pyghidra\n"
+                "(no MCP SDK pin needed: the server speaks both mcp 1.x and 2.x)\n"
                 "The doctor skill (halo-re:ghidra-doctor) walks through this."
             ) from exc
         pyghidra.start(False)

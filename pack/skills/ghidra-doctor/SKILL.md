@@ -78,11 +78,14 @@ pack's own MCP server (tools surface in a Halo session under the
    mid-session expecting the running server to pick it up — it must be set
    before `pyghidra.start()`, i.e. before the session opens; restart the
    session after changing it.
-5. **Check the Python deps** with `python -c "import pyghidra, mcp"`.
+5. **Check the Python dep** with `python -c "import pyghidra"`.
    Exit code 0 = pass. On failure, install into the *same Python Halo
-   runs the pack with* (match `sys.executable`): 
-   `python -m pip install pyghidra "mcp>=1.2,<2"`. The `mcp<2` pin is
-   deliberate — newer majors break the FastMCP import the server uses.
+   runs the pack with* (match `sys.executable`):
+   `python -m pip install pyghidra`. No MCP SDK install or pin is needed:
+   the server imports `FastMCP` (mcp 1.x) or `MCPServer` (mcp 2.x),
+   whichever the environment already has — and halo itself ships the SDK.
+   NEVER `pip install "mcp<2"` into Halo's Python: it would downgrade
+   halo's own mcp 2.x and break halo's MCP client.
 6. **Validate the project dir**: it must not contain any dot-prefixed
    path element — Ghidra throws
    `IllegalArgumentException: Path element starting with '.' is not

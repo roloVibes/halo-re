@@ -43,8 +43,10 @@ ships everything else:
   decompiler) is rejected and the previous release tried automatically.
 - the same installer handles the optional **REA** (Reverse Engineer
   Anything) release: `--tool rea --yes` (~98 MB, MIT, Windows exe).
-- Python deps for the MCP server: `pyghidra` + `mcp>=1.2,<2` in the
-  Python Halo runs under (the doctor names the exact command).
+- Python dep for the MCP server: `pyghidra` in the Python Halo runs
+  under (the doctor names the exact command). No MCP SDK pin — the
+  server imports `FastMCP` (mcp 1.x) or `MCPServer` (mcp 2.x), whichever
+  the environment has.
 
 Every measured trap — dot-prefixed project paths, GHIDRA_INSTALL_DIR
 inheritance, the fresh-import analysis gap, the two-stage start, the zip
@@ -65,10 +67,15 @@ code.
 
 ## Status
 
-0.1.0 — validated against halo 3.2.1.0: `halo pack inspect` reports
+0.2.1 — validated against halo 3.2.1.0: `halo pack inspect` reports
 `problems: none`; the MCP server is smoke-tested end-to-end against a
 real Ghidra 12.1.2 install (decompile through stdio JSON-RPC, all 12
-tools).
+tools). Re-validated 2026-10-27 against halo 3.3.2.0 after the MCP SDK's
+1.x→2.x rename (`FastMCP` → `MCPServer`) broke the server launch: the
+import now handles both, initialize + tools/list (all 12 tools) verified
+under Halo's Python. Note a Halo upgrade reinstalls its Python env —
+`pyghidra` must be reinstalled there (the doctor names the command) or
+the server starts but binary analysis refuses.
 
 ## License
 
