@@ -6,10 +6,132 @@ Ghidra MCP server, procedural RE skills distilled from agentic-RE training,
 kernel-driver and patch-diff audit playbooks, analysis agent roles, and
 triage/static-sweep workflows.
 
+## Installation
+
+Five steps; the pack itself takes under a minute, Ghidra (step 4) is the
+only big download. Every command below was run and verified against
+halo 3.3.4.0.
+
+### Before you start
+
+- **[Halo Harness](https://github.com/roloVibes/Halo-Harness) 3.2.0.0 or
+  newer, already installed and initialized.** This is a Halo pack, not a
+  standalone program — without Halo there is nothing to install it into.
+  If you don't have Halo yet:
+
+  ```sh
+  curl -fsSL https://raw.githubusercontent.com/roloVibes/Halo-Harness/master/scripts/install-halo.sh | bash
+  halo init        # the wizard: provider, model, permission mode
+  ```
+
+  (Windows and no-installer options:
+  [Halo-Harness docs/INSTALL.md](https://github.com/roloVibes/Halo-Harness/blob/master/docs/INSTALL.md))
+
+- **git**, to clone this repo.
+- For binary analysis (step 4): **Ghidra** (~570 MB, Apache-2.0 — not
+  bundled) and a **JDK 21+**. The pack's doctor can download Ghidra for
+  you; everything else it detects automatically.
+
+### Step 1 — clone this repo (location is your choice)
+
+```sh
+git clone https://github.com/roloVibes/halo-re.git ~/src/halo-re
 ```
-halo pack install <this-repo>/pack
+
+`~/src/halo-re` is just an example — the clone can live anywhere.
+The clone is only the **download source**: step 2 copies the pack into
+Halo's own storage (`~/.halo/packs/halo-re/`), and after that the
+clone is no longer needed.
+
+> **Do not** use `halo pack install
+> https://github.com/roloVibes/halo-re.git` — it fails with
+> `no pack.yaml in src`. Halo requires the pack manifest at the root of
+> a git URL, and this repo keeps it under `pack/`. Install from the
+> cloned folder's `pack/` subdirectory, as in step 2.
+
+### Step 2 — install the pack
+
+Run this in your **terminal** — the same place you run `halo`. You do
+not need a Halo session open; if you run it through a session's shell
+tool that works too, but the pack only loads in sessions started
+*after* step 3 (Halo reads enabled packs when a session starts).
+
+```sh
+cd ~/src/halo-re                # wherever you cloned it
+halo pack install ./pack
+```
+
+Expected output:
+
+```
+installed halo-re 0.2.1 at ~/.halo/packs/halo-re (disabled)
+it offers: 5 bios, 4 lineups, 11 skills, 1 MCP server
+it requests: mcp:ghidra, bash
+enable it: halo pack enable halo-re --grant mcp:ghidra --grant bash
+```
+
+The pack arrives **disabled** — that is normal; step 3 turns it on.
+(If you see `halo-re is already installed ... (halo pack update
+halo-re)`, you already did this — continue at step 3.)
+
+### Step 3 — enable it and grant what it needs
+
+```sh
 halo pack enable halo-re --grant mcp:ghidra --grant bash
 ```
+
+(`mcp:ghidra` is the read-only Ghidra server; `bash` is what the
+skills and playbooks run under.)
+
+### Step 4 — set up Ghidra (the doctor does the work)
+
+Start a new Halo session (`halo`) — a session that was already open
+when you enabled the pack will not have it — and run the pack's
+`halo-re:ghidra-doctor` skill once. It:
+
+- finds an existing Ghidra install (or offers to download the latest
+  official release — it picks one with natives for your OS, a release
+  that ships none is rejected automatically),
+- checks the JDK (21+), fixes the exec bits release zips lose, and
+  verifies the install **by effect** (running it, not `which`),
+- persists the path (`halo config set packs.settings.halo-re.ghidra_install_dir <path>`)
+  so the pack always knows where it is,
+- names the exact `pyghidra` install command for the Python Halo runs
+  under — run that one command; without it the server starts but
+  binary analysis refuses.
+
+### Step 5 — verify
+
+```sh
+halo pack list              # → halo-re  0.2.1  enabled  user
+halo pack inspect halo-re   # → state: enabled; mcp:ghidra (granted), bash (granted); problems: none
+```
+
+Then, in a Halo session:
+
+```sh
+halo teams use halo-re--hr-binary-triage
+```
+
+or run a workflow headless:
+
+```sh
+halo workflow run halo-re/triage --input binary=<path-to-binary>
+```
+
+### Updating and removing
+
+```sh
+git -C ~/src/halo-re pull     # refresh the clone first
+halo pack update halo-re      # shows what changes, asks before applying
+halo pack remove halo-re      # the pack's files only; your config stays
+```
+
+Note: a Halo upgrade reinstalls its Python environment — `pyghidra`
+must be reinstalled there (the doctor names the command) or the server
+starts but binary analysis refuses.
+
+## The design rule
 
 **Binary analysis without giving the agent a write primitive.** Every
 tool the pack contributes is read-only by construction — no rename, no
@@ -30,25 +152,22 @@ project or the target.
 
 ## What you supply — never bundled
 
-Ghidra is ~570 MB and licensed Apache-2.0 — the pack does not ship it. It
-ships everything else:
+Ghidra is ~570 MB and licensed Apache-2.0 — the pack does not ship it.
+The details behind [Installation](#installation) step 4:
 
-- an install **doctor** (detects by effect — no `which ghidra`, there is
-  no such binary; auto-detect globs `ghidra_*_PUBLIC` under `~/Documents`,
-  `~/Downloads`, `~` and the tools dir);
-- an **on-demand installer**: when no install is found, the doctor offers
-  "download the latest official release?" and runs
-  `install_tools.py --tool ghidra --yes` — it downloads from
-  github.com/NationalSecurityAgency/ghidra/releases, checks the JDK
-  (21+), extracts into the tools dir (default `~/halo-re-tools`, config
-  key `tools_dir`), fixes the exec bits release zips lose, verifies by
-  effect, and persists the path (`halo config set
-  packs.settings.halo-re.ghidra_install_dir <path>`) so the pack always
-  knows where it is. **Platform fallback included**: a release that ships
-  no natives for your OS (measured: Ghidra 12.2+ dropped the macOS
-  decompiler) is rejected and the previous release tried automatically.
+- the doctor detects by effect (no `which ghidra` — there is no such
+  binary) and auto-detects existing installs by globbing
+  `ghidra_*_PUBLIC` under `~/Documents`, `~/Downloads`, `~` and the
+  tools dir;
+- the on-demand installer downloads from
+  github.com/NationalSecurityAgency/ghidra/releases, extracts into the
+  tools dir (default `~/halo-re-tools`, config key `tools_dir`), and a
+  release that ships no natives for your OS (measured: Ghidra 12.2+
+  dropped the macOS decompiler) is rejected with the previous release
+  tried automatically;
 - the same installer handles the optional **REA** (Reverse Engineer
-  Anything) release: `--tool rea --yes` (~98 MB, MIT, Windows exe).
+  Anything) release: `install_tools.py --tool rea --yes` (~98 MB, MIT,
+  Windows exe);
 - Python dep for the MCP server: `pyghidra` in the Python Halo runs
   under (the doctor names the exact command). No MCP SDK pin — the
   server imports `FastMCP` (mcp 1.x) or `MCPServer` (mcp 2.x), whichever
@@ -102,8 +221,8 @@ a binary ──open_binary──▶ Ghidra project (import + analyze, expensive,
                             vuln-reviewer (read-only judge) ──▶ report
 ```
 
-1. Install the pack, grant the server
-   (`halo pack enable halo-re --grant mcp:ghidra --grant bash`), and run
+1. [Install the pack](#installation) (clone → `halo pack install ./pack`
+   → `halo pack enable halo-re --grant mcp:ghidra --grant bash`), and run
    the `halo-re:ghidra-doctor` skill once: it finds (or downloads) the
    Ghidra install, verifies it by effect, and persists the path.
 2. `open_binary <path>` imports and analyzes the target — expensive, done
