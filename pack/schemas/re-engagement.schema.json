@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rolovibes.example/halo-re/re-engagement.schema.json",
+  "title": "Halo RE engagement record",
+  "description": "The unit of authorized reverse-engineering work. Every field here is enforced by the findings store independently of any model. Structure ported from the halo-hacker engagement schema.",
+  "type": "object",
+  "required": ["engagement_id", "owner", "authorization", "targets_file", "allowed_activities", "window", "data_handling", "reporting_destination", "retention"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$",
+      "description": "Stable unique id; becomes the state dir name."
+    },
+    "owner": {
+      "type": "string",
+      "description": "Human owner of this engagement."
+    },
+    "authorization": {
+      "type": "object",
+      "required": ["record_reference", "signed_by"],
+      "properties": {
+        "record_reference": {
+          "type": "string",
+          "description": "Pointer to the signed-scope artifact (contract/rules-of-engagement). No engagement object exists without one."
+        },
+        "signed_by": { "type": "string" },
+        "signed_date": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": true
+    },
+    "targets_file": {
+      "type": "string",
+      "description": "Relative path to the declarative targets/scope file (the binaries, firmware images, and components in scope). The ONLY hand-edited scope file."
+    },
+    "allowed_activities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "passive-triage",
+          "static-analysis",
+          "decompilation",
+          "dynamic-analysis",
+          "debug-session",
+          "diff-analysis"
+        ]
+      },
+      "description": "Deny-by-default: anything not listed is refused."
+    },
+    "exclusions_note": {
+      "type": "string",
+      "description": "Human note; machine exclusions live in the targets file."
+    },
+    "window": {
+      "type": "object",
+      "required": ["start", "expires"],
+      "properties": {
+        "start": { "type": "string", "format": "date-time" },
+        "expires": { "type": "string", "format": "date-time" },
+        "timezone": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "test_accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["account_id", "role"],
+        "properties": {
+          "account_id": { "type": "string" },
+          "role": { "type": "string" },
+          "object_scope": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      },
+      "description": "Approved identities only; credentials are NEVER stored here."
+    },
+    "rate_limits": {
+      "type": "object",
+      "properties": {
+        "max_requests_per_minute": { "type": "integer", "minimum": 1 },
+        "max_concurrent_validations": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "required_approvals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Activities from allowed_activities that additionally require an explicit human approval per execution."
+    },
+    "data_handling": {
+      "type": "object",
+      "required": ["locality"],
+      "properties": {
+        "locality": {
+          "type": "string",
+          "enum": ["on-box-only", "lan-allowed", "named-destinations"]
+        },
+        "model_lanes": {
+          "type": "string",
+          "enum": ["local-models-only", "any-configured"],
+          "description": "local-models-only: no engagement content leaves the box/LAN."
+        },
+        "redaction": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "reporting_destination": {
+      "type": "string",
+      "description": "Where generated reports go; external publishing stays behind human review."
+    },
+    "retention": {
+      "type": "object",
+      "required": ["audit_retention_days"],
+      "properties": {
+        "audit_retention_days": { "type": "integer", "minimum": 0 },
+        "evidence_retention_days": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "active", "paused", "expired", "closed"],
+      "description": "The store refuses everything unless active."
+    }
+  }
+}

@@ -16,6 +16,7 @@ evidence (enforced by the vuln-reviewer gate).
 | audit.import-surface | audit | audit | halo-re:binary-triage (exact-name risk model) |
 | diff.patch-cve | diff | diff | halo-re:patch-diff-analysis |
 | static.semgrep-decompiled | static | static | halo-re:semgrep-decompiled, CWE-416/190/787 |
+| static.craft-anything-study | static | static | halo-re:craft-anything-study |
 | report.draft-from-confirmed | reporting | reporting | artifacts/re-finding-report.json |
 
 Workflows (halo workflow run halo-re/&lt;name&gt;): `triage`, `semgrep-triage`.

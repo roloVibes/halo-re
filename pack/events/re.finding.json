@@ -1,16 +1,22 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "re.finding event",
-  "description": "One confirmed or candidate finding from binary analysis, published to the Studio live feed.",
+  "description": "One finding lifecycle moment from an authorized reverse-engineering analysis, published to the Studio live feed: a candidate was identified (by an analyst, a scanner, an import, or a Ghidra session), validated, confirmed, or rejected. Payload shape matches tools/findings_view.finding_event.",
   "type": "object",
-  "required": ["binary", "function", "issue", "state"],
+  "required": ["finding_id", "title", "state", "engagement_id"],
   "additionalProperties": false,
   "properties": {
-    "binary": { "type": "string" },
-    "function": { "type": "string" },
-    "issue": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "engagement_id": { "type": "string" },
+    "title": { "type": "string" },
     "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
-    "state": { "type": "string", "enum": ["candidate", "confirmed", "rejected", "needs-review"] },
-    "evidence": { "type": "string" }
+    "state": { "type": "string", "enum": ["identified", "reviewed", "confirmed", "rejected", "duplicate", "withdrawn", "not_reproduced", "requires_human_review"] },
+    "source": { "type": "string", "enum": ["tester", "scanner", "import", "ghidra-session"], "description": "how the candidate entered the pipeline" },
+    "target_ref": { "type": "string" },
+    "binary": { "type": "string", "description": "the binary/object the finding is about" },
+    "function": { "type": "string", "description": "the function/address the finding is localized to" },
+    "cwe": { "type": "string", "pattern": "^CWE-[0-9]+$" },
+    "evidence_ref": { "type": "string", "description": "ledger ref for the decisive evidence, when set" },
+    "actor": { "type": "string", "description": "who moved the state (role or human)" }
   }
 }

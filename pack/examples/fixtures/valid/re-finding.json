@@ -1,0 +1,25 @@
+{
+  "finding_id": "re-01-heap-overflow",
+  "engagement_id": "eng-re-test-001",
+  "target_ref": "demobox.bin",
+  "binary": "demobox.bin",
+  "function": "parse_header",
+  "cwe": "CWE-122",
+  "title": "Heap buffer overflow in parse_header length handling",
+  "category": "memory-safety",
+  "description": "A header length field read from the parsed structure is trusted without bounds checking, letting an attacker-controlled header overflow the destination heap buffer.",
+  "reproduction": {
+    "steps": [
+      "Load demobox.bin and decompile parse_header.",
+      "Trace the attacker-controlled length field to the copy loop.",
+      "Observe the copy writes past the end of the destination buffer."
+    ]
+  },
+  "evidence": [
+    { "ledger_ref": "evidence/ledger.jsonl#0000", "artifact_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "kind": "log", "sanitized": true }
+  ],
+  "status": "candidate",
+  "audit_history": [
+    { "timestamp": "2026-11-01T14:02:00Z", "actor": "hr-analyst", "action": "candidate-created" }
+  ]
+}

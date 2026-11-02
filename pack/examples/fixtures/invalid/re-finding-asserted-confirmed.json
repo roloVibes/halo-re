@@ -1,0 +1,22 @@
+{
+  "finding_id": "re-02-asserted",
+  "engagement_id": "eng-re-test-001",
+  "binary": "demobox.bin",
+  "title": "An analyst said so",
+  "category": "memory-safety",
+  "status": "confirmed",
+  "description": "Agent asserted this without validation or judge review.",
+  "evidence": [
+    {
+      "ledger_ref": "evidence/ledger.jsonl#0001",
+      "kind": "log",
+      "sanitized": true
+    }
+  ],
+  "audit_history": [],
+  "reproduction": {
+    "steps": [
+      "none recorded"
+    ]
+  }
+}

@@ -262,3 +262,41 @@ def test_readme_catalog_lists_every_playbook():
     catalog = (PACK_ROOT / "PLAYBOOK_CATALOG.md").read_text()
     for path in (PACK_ROOT / "playbooks").glob("*.yaml"):
         assert path.stem in catalog, f"{path.stem} missing from PLAYBOOK_CATALOG.md"
+
+
+# --- craft-anything-study addition --------------------------------------------
+
+def test_craft_anything_skill_present_with_frontmatter_and_license():
+    path = PACK_ROOT / "skills" / "craft-anything-study" / "SKILL.md"
+    assert path.is_file(), "craft-anything-study skill missing"
+    text = path.read_text()
+    assert text.startswith("---"), "missing frontmatter"
+    fm = yaml.safe_load(text.split("---")[1])
+    assert fm.get("name") == "craft-anything-study", fm.get("name")
+    assert "Pinball Genie LLC" in str(fm.get("license", ""))
+    assert fm.get("description"), "description required"
+    assert isinstance(fm.get("metadata"), dict) and "author" in fm["metadata"]
+    # the pack-wide skill validator must also accept it
+    vp.problems.clear()
+    vp.validate_skills()
+    assert not vp.problems, vp.problems
+
+
+def test_craft_anything_playbook_in_catalog_and_schema_valid():
+    pb = PACK_ROOT / "playbooks" / "static.craft-anything-study.yaml"
+    assert pb.is_file(), "playbook missing"
+    catalog = (PACK_ROOT / "PLAYBOOK_CATALOG.md").read_text()
+    assert "static.craft-anything-study" in catalog
+    data = yaml.safe_load(pb.read_text())
+    assert data["playbook_id"] == "static.craft-anything-study"
+    for stage in data["stages"]:
+        assert stage["impact"] == "read-only", stage["name"]
+    jsonschema.validate(data, _schema("playbook"))  # raises on violation
+
+
+def test_craft_anything_config_key_declared_with_empty_default():
+    m = yaml.safe_load((PACK_ROOT / "pack.yaml").read_text())
+    props = m["config"]["schema"]["properties"]
+    assert "craft_anything_cli_path" in props, "config key not declared"
+    assert props["craft_anything_cli_path"]["type"] == "string"
+    assert m["config"]["defaults"]["craft_anything_cli_path"] == ""

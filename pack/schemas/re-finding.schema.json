@@ -1,0 +1,345 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rolovibes.example/halo-re/re-finding.schema.json",
+  "title": "RE finding record",
+  "description": "A suspected or confirmed weakness found during reverse-engineering analysis. Status lifecycle: candidate -> needs_validation -> (confirmed | not_reproduced | duplicate | rejected | requires_human_review). An observation is never 'confirmed' because an agent asserted it: confirmation requires validator reproduction + judge decision.",
+  "type": "object",
+  "required": [
+    "finding_id",
+    "engagement_id",
+    "title",
+    "category",
+    "status",
+    "description",
+    "evidence",
+    "audit_history"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "finding_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+-[0-9]{2,}-[a-z0-9-]+$",
+      "description": "Short prefix, zero-padded sequence, slug: xx-01-slug style (the engagement-tree lineage)."
+    },
+    "engagement_id": {
+      "type": "string"
+    },
+    "target_ref": {
+      "type": "string"
+    },
+    "binary": {
+      "type": "string",
+      "description": "The binary/object the finding is about."
+    },
+    "function": {
+      "type": "string",
+      "description": "The function/address the finding is localized to."
+    },
+    "cwe": {
+      "type": "string",
+      "pattern": "^CWE-[0-9]+$",
+      "description": "CWE identifier for the weakness class (e.g. CWE-122)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "category": {
+      "type": "string",
+      "description": "RE classification (e.g. memory-safety, input-validation, privilege-escalation, cryptography, logic, configuration, information-disclosure, anti-tamper, other)."
+    },
+    "playbook": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "description": {
+      "type": "string"
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_behavior": {
+      "type": "string"
+    },
+    "observed_behavior": {
+      "type": "string"
+    },
+    "reproduction": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "scripts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "environment_notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "ledger_ref"
+        ],
+        "properties": {
+          "ledger_ref": {
+            "type": "string",
+            "description": "Hash-chained ledger row reference; must resolve and chain-verify."
+          },
+          "artifact_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "request-response",
+              "screenshot",
+              "log",
+              "transcript",
+              "config",
+              "note"
+            ]
+          },
+          "sanitized": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "reproduced",
+            "not_reproduced",
+            "needs_more_info"
+          ]
+        },
+        "validator_ref": {
+          "type": "string"
+        },
+        "independent": {
+          "type": "boolean",
+          "description": "True only when the validator did not share the analyst's session/context."
+        },
+        "record_ref": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "reviewer_decision": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "confirmed",
+            "rejected",
+            "needs_validation",
+            "duplicate",
+            "requires_human_review"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "severity_rationale": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "duplicate_of": {
+      "type": "string",
+      "description": "finding_id this duplicates (judge-set)."
+    },
+    "impact": {
+      "type": "string"
+    },
+    "remediation": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "description": "Working severity label. Display-facing; a CVSS vector, when computed, is the authority."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "tester",
+        "scanner",
+        "import",
+        "passive-traffic"
+      ],
+      "description": "How the candidate entered the pipeline: an analyst's own work, a scanner normalizer, an import, or passive review."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "candidate",
+        "needs_validation",
+        "confirmed",
+        "not_reproduced",
+        "duplicate",
+        "rejected",
+        "requires_human_review",
+        "withdrawn"
+      ]
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Capability tokens this finding required (for attack-path projection)."
+    },
+    "grants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Capability tokens exploiting this finding grants."
+    },
+    "audit_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "actor",
+          "action"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Role or human."
+          },
+          "action": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "technique_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(T\\d{4}(\\.\\d{3})?|AML\\.T\\d{4}(\\.\\d{3})?)$"
+      },
+      "description": "MITRE ATT&CK (T####) and ATLAS (AML.T####) technique ids this finding maps to. Verify ids before citing \u2014 never cite an unverified id."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "confirmed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "validation",
+          "reviewer_decision"
+        ],
+        "properties": {
+          "validation": {
+            "required": [
+              "status",
+              "independent"
+            ],
+            "properties": {
+              "status": {
+                "const": "reproduced"
+              },
+              "independent": {
+                "const": true
+              }
+            }
+          },
+          "reviewer_decision": {
+            "required": [
+              "decision",
+              "rationale",
+              "evidence_refs"
+            ],
+            "properties": {
+              "decision": {
+                "const": "confirmed"
+              }
+            }
+          }
+        }
+      },
+      "description": "Anti-glazing hardening: 'confirmed' is structurally impossible without an INDEPENDENT reproduced validation and a judge decision citing evidence. No amount of agent assertion satisfies it."
+    }
+  ]
+}

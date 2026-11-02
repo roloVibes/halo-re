@@ -1,0 +1,29 @@
+{
+  "engagement_id": "eng-re-test-001",
+  "owner": "engagement-owner",
+  "authorization": {
+    "record_reference": "ROE-2026-RE-001 (signed)",
+    "signed_by": "Sponsoring Engineer",
+    "signed_date": "2026-10-28"
+  },
+  "targets_file": "scope/targets.json",
+  "allowed_activities": [
+    "passive-triage",
+    "static-analysis",
+    "decompilation"
+  ],
+  "window": {
+    "start": "2026-11-01T09:00:00Z",
+    "expires": "2026-12-01T18:00:00Z"
+  },
+  "data_handling": {
+    "locality": "on-box-only",
+    "model_lanes": "local-models-only"
+  },
+  "reporting_destination": "engagement owner only (draft)",
+  "retention": {
+    "audit_retention_days": 90,
+    "evidence_retention_days": 90
+  },
+  "status": "active"
+}

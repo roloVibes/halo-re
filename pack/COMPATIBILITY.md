@@ -19,6 +19,26 @@
 | Workflows | `halo_harness/packs/workflow_rules.py` | stable (R5) | `workflows/triage.yaml`, `workflows/semgrep-triage.yaml` |
 | Artifacts | `contributes.artifacts` | stable (R5) | `artifacts/re-finding-report.json` |
 
+## Interfaces the pack depends on (added 0.3.0)
+
+| Interface | Where | Status | Pack use |
+|---|---|---|---|
+| `halo_harness.ext.data_dir` | extension API 1.0 | stable | findings_view resolves the pack data folder (`~/.halo/packs/.data/halo-re/` — where Studio serves `data:` panel sources); falls back to the same path by convention, `$HALO_RE_DATA_DIR` overrides |
+| `halo_harness.ext.publish_event` | extension API 1.0 | stable | findings_view publishes `re.finding` to the Studio live feed on every store change (best-effort, never raises) |
+| Studio bundle panels (`contributes.studio`, kind `bundle`, `studio-script` grant) | `halo_harness/packs/studio_registry.py`, `studio/packs_studio_api.py` | stable (3.2.0.0 R3+) | the findings browser (`studio/findings.js`), reads the pack data folder over the data route, live refresh via `/api/events` |
+
+## External tool: craft-anything-cli
+
+Validated against craft-anything v0.3.0 (2026-11-02). Upstream
+(github.com/storytold/craft-anything — dual MIT/Apache-2.0) is alpha
+(v0.1.0 shipped 2026-10-31), so re-validate `doctor` and the named
+subcommands on any upgrade and re-pin. The CLI is an EXTERNAL tool: never
+bundled with the pack and never downloaded by the pack or its skills —
+the user installs it (prebuilt release zip or
+`cargo install --path apps/craft-anything-cli`) and the
+craft-anything-study skill skips visibly when it is absent. The license
+notice obligation does not arise because nothing is vendored.
+
 ## Hard rules
 
 - The pack imports `halo_harness` ONLY through `halo_harness.ext` (the

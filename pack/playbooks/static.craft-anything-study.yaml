@@ -1,0 +1,75 @@
+# halo-re playbook (generated structure, hand-written prose)
+playbook_id: static.craft-anything-study
+version: '1.0'
+title: Craft-anything broad-format study
+category: static
+phase: static
+objective: 'Study formats the pack''s Ghidra path does not cover (.NET, Java bytecode,
+  Android/APK/Flutter, Mach-O ObjC/Swift metadata, WASM, firmware, game archives, packed
+  executables, SQLite) with the externally-installed craft-anything-cli, starting from
+  a first-pass inventory and recording evidence; skip visibly when the CLI is absent.'
+methodology_refs:
+- halo-re:craft-anything-study
+assigned_role: analyst
+prerequisites:
+- kind: binary
+  detail: target binary/archive/database path, named by the user
+- kind: tool
+  detail: craft-anything-cli resolvable via the pack config key craft_anything_cli_path
+    or on PATH (verified by `craft-anything-cli doctor` exit 0), invoked through bash
+scope_requirements:
+  required_activities:
+  - static-analysis
+  - tool-driven-querying
+  target_kinds:
+  - dotnet-assembly
+  - java-class
+  - android-apk
+  - mach-o
+  - wasm
+  - firmware
+  - game-archive
+  - packed-executable
+  - sqlite-db
+stages:
+- name: presence-check
+  description: Resolve craft-anything-cli (config key craft_anything_cli_path, then
+    command -v); run `craft-anything-cli doctor` and require exit 0. When absent,
+    SKIP VISIBLY with the install command and note the built-in Ghidra path remains
+    available.
+  impact: read-only
+  expected_observations:
+  - resolved CLI path with a passing doctor self-test, or a visible skip line
+- name: triage
+  description: 'core_target_triage <target> for the first-pass inventory; when packing
+    is reported, core_packed_files_list then unpack, and re-triage the unpacked
+    artifacts. Never classify by file extension alone.'
+  impact: read-only
+  expected_observations:
+  - format/platform inventory with packer status and the exact command lines used
+- name: format-study
+  description: Pick format-specific tools from the triage verdict (e.g. managed_ilspy_decompile
+    for .NET, java_vineflower_decompile for Java, android_package_show / android_flutter_identify
+    for APKs, apple_macho_show / apple_objc_classes_list for Mach-O metadata, db_sqlite_show
+    for databases); read-only study of structure, metadata, and decompiled output.
+  impact: read-only
+  expected_observations:
+  - per-format study outputs quoted as evidence with producing commands
+  limits:
+    max_functions: 30
+- name: record
+  description: Fold security-relevant structure findings into the pack's finding flow
+    (binary-triage verdict schema; re.finding for confirmed items); hand off unanswered
+    native-code questions to the Ghidra path when an install exists.
+  impact: read-only
+  expected_observations:
+  - recorded findings with evidence and explicit handoff decisions
+completion_criteria:
+- presence check resolved or skipped visibly, never silently
+- every study claim carries the command line and output that produced it
+- no decryption/cracking/protection bypass attempted in any mode (authorized-assessment only)
+finding_classification: format-specific findings (structure, packers, embedded content)
+  with security-relevance labels; CWEs where a code-level issue is confirmed
+judge_requirements:
+  required: true
+  independent_validation: true

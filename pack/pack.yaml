@@ -6,7 +6,7 @@
 # skill that finds and verifies the install, and a config key for its path.
 id: halo-re
 name: Halo RE
-version: 0.2.1
+version: 0.3.0
 description: >-
   Binary reverse-engineering capability pack: a read-only Ghidra MCP server
   (decompile, disassemble, search, xrefs, callgraph), procedural RE skills
@@ -27,6 +27,8 @@ capabilities:
   - audit         # kernel-driver IOCTL, kernel-API and import-surface auditing
   - diff          # patch/CVE comparative analysis (ghidriff similarity triage)
   - static        # semgrep/opengrep scanning over decompiled code
+  - findings      # evidence-chained RE findings store + lifecycle (tools/findings_store.py)
+  - reporting     # confirmed-only report + leadership email renderers (reporting/)
   - skills        # procedural RE know-how contributed as skills
 requires: []      # no hard pack dependencies
 contributes:
@@ -47,11 +49,63 @@ contributes:
   workflows: [triage, semgrep-triage]
   artifacts: [re-finding-report]
   events:
-    - {kind: re.finding, schema: events/re.finding.json, description: one confirmed or candidate finding from binary analysis}
+    - {kind: re.finding, schema: events/re.finding.json, description: one finding lifecycle moment (identified/reviewed/confirmed/terminal) from authorized binary analysis}
     - {kind: re.session, schema: events/re.session.json, description: a Ghidra analysis session opened or closed}
+  studio:
+    sections:
+      - id: halo-re
+        title: Halo RE
+        blurb: Findings for the active analysis engagement — identified, reviewed, confirmed.
+        help: >-
+          The browser panel is the pack's own script (grant studio-script to
+          run it): every finding clickable — full detail, evidence, validation,
+          reviewer decision — with filters, search and live refresh. The counts
+          and table panels read the pack's data folder, written by
+          tools/findings_view.py on every store change (and by
+          `findings_view.py auto`). The feed shows re.finding events.
+        panels:
+          - id: browser
+            title: Findings browser
+            kind: bundle
+            source: studio/findings.js
+            w: 24
+            h: 120
+            help: >-
+              Interactive findings browser: click a row (or Enter on a selected
+              row) for the full finding — description, binary/function, CWE,
+              evidence ledger rows, validation, reviewer decision, remediation,
+              audit history. Filter by severity/state/source, free-text search,
+              copy as markdown, open raw JSON. Refreshes on re.finding events
+              and every 15s. Requires the studio-script grant.
+          - id: counts
+            title: Counts
+            kind: table
+            source: "data:findings/counts.json"
+            columns: [engagement, identified, reviewed, confirmed]
+            w: 24
+            h: 12
+          - id: table
+            title: Findings
+            kind: table
+            source: "data:findings/summary.json"
+            columns: [finding_id, title, severity, state, target_ref, source, updated]
+            w: 24
+            h: 60
+          - id: feed
+            title: Lifecycle
+            kind: events
+            w: 24
+            h: 40
+            help: "re.finding events as they happen (analyst, scanner, import, Ghidra session)"
+    palette:
+      - {id: open-browser, label: Open the RE findings browser, action: "route:halo-re/browser"}
+      - {id: open-table, label: Open the RE findings table, action: "route:halo-re/table"}
+      - {id: open-lifecycle, label: Open the RE findings lifecycle feed, action: "route:halo-re/feed"}
+    config_form: true
 permissions:
   - mcp:ghidra
-  - bash        # the skills drive CLI RE tools (file/nm/strings/otool, ghidrecomp, opengrep)
+  - bash        # the skills drive CLI RE tools (file/nm/strings/otool, ghidrecomp, opengrep, craft-anything-cli)
+  - studio-script # the findings browser bundle panel (studio/findings.js)
 config:
   schema:
     properties:
@@ -63,10 +117,13 @@ config:
         {type: string, description: "Where the on-demand installer puts downloads (default ~/halo-re-tools). The Ghidra/REA release zips land under <tools_dir>/downloads/."}
       rea_dir:
         {type: string, description: "Where the optional REA (Reverse Engineer Anything) release was extracted, if you installed it."}
+      craft_anything_cli_path:
+        {type: string, description: "Path to the craft-anything-cli binary (external tool, not bundled). Empty = auto-detect on PATH; when absent the craft-anything skill skips visibly."}
     additionalProperties: false
   defaults:
     ghidra_install_dir: ""
     project_dir: ""
     tools_dir: ""
     rea_dir: ""
+    craft_anything_cli_path: ""
 migrations: []
