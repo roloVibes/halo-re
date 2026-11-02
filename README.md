@@ -64,7 +64,7 @@ halo pack install ./pack
 Expected output:
 
 ```
-installed halo-re 0.3.0 at ~/.halo/packs/halo-re (disabled)
+installed halo-re 0.4.0 at ~/.halo/packs/halo-re (disabled)
 it offers: 5 bios, 4 lineups, 11 skills, 1 MCP server
 it requests: mcp:ghidra, bash
 enable it: halo pack enable halo-re --grant mcp:ghidra --grant bash
@@ -103,7 +103,7 @@ when you enabled the pack will not have it — and run the pack's
 ### Step 5 — verify
 
 ```sh
-halo pack list              # → halo-re  0.3.0  enabled  user
+halo pack list              # → halo-re  0.4.0  enabled  user
 halo pack inspect halo-re   # → state: enabled; mcp:ghidra (granted), bash (granted); problems: none
 ```
 
@@ -150,7 +150,7 @@ project or the target.
 | **2 Halo workflows** | `halo workflow run halo-re/triage --input binary=<path>` and `halo-re/semgrep-triage` — multi-stage, judged, gated pipelines that compile to Orchestra goals. |
 | **Artifacts + events** | The `re-finding-report` artifact schema and `re.finding` / `re.session` events for the Studio live feed. |
 | **Findings lifecycle** (0.3.0) | An evidence-chained findings store (`pack/tools/findings_store.py`): hash-chained ledger, content-addressed artifacts, an 8-status lifecycle where `confirmed` structurally requires independent reproduction AND a reviewer decision (no agent-asserted confirmations), no-delete with controlled withdrawal. Engagement records (`pack/schemas/re-engagement.schema.json`) scope the authorized work. |
-| **Studio findings browser** (0.3.0) | A pack Studio section (`studio-script` grant): every finding clickable — full detail with evidence ledger rows, validation, reviewer decision, remediation, audit history — plus filters, search, copy-as-markdown and live refresh. Counts/table/feed panels work without the grant. |
+| **Two Studio sections** (0.4.0) | **Reverse engineering** — the findings browser (every finding clickable: evidence ledger rows, validation, reviewer decision, remediation, audit history, filters, search, live refresh) plus counts/table/feed. **Craft & rebuild** — the craft-anything path: study any software, then craft your own version, tracked by `tools/craft_studies.py` (target, mode clean-room/deep, stack, output folder, status planned→studying→building→checking→ready, check mismatches) with its own interactive studies browser, tables and study-lifecycle feed. Both bundle panels need the `studio-script` grant; the tables and feeds work without it. |
 | **Reporting** (0.3.0) | Confirmed-only renderers (`pack/reporting/`): full report, leadership email (FUD-filtered, fail-closed on anything not confirmed), and `/hr report`. |
 
 ## What you supply — never bundled
@@ -189,7 +189,7 @@ The details behind [Installation](#installation) step 4:
 
 ## Status
 
-0.3.0 — `halo pack inspect` reports `problems: none`; 78 tests green
+0.4.0 — `halo pack inspect` reports `problems: none`; 93 tests green
 (0.2.1 — `halo pack inspect` reported `problems: none` (validated against
 halo 3.2.1.0 and, on 2026-10-27, halo 3.3.2.0). The MCP server is
 smoke-tested end-to-end against a real Ghidra 12.1.2 install (decompile
