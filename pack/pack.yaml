@@ -6,7 +6,7 @@
 # skill that finds and verifies the install, and a config key for its path.
 id: halo-re
 name: Halo RE
-version: 0.3.0
+version: 0.4.0
 description: >-
   Binary reverse-engineering capability pack: a read-only Ghidra MCP server
   (decompile, disassemble, search, xrefs, callgraph), procedural RE skills
@@ -51,10 +51,11 @@ contributes:
   events:
     - {kind: re.finding, schema: events/re.finding.json, description: one finding lifecycle moment (identified/reviewed/confirmed/terminal) from authorized binary analysis}
     - {kind: re.session, schema: events/re.session.json, description: a Ghidra analysis session opened or closed}
+    - {kind: re.craft.study, schema: events/re.craft.study.json, description: one moment in a craft-anything study (study → build → check → ready)}
   studio:
     sections:
-      - id: halo-re
-        title: Halo RE
+      - id: re
+        title: Reverse engineering
         blurb: Findings for the active analysis engagement — identified, reviewed, confirmed.
         help: >-
           The browser panel is the pack's own script (grant studio-script to
@@ -97,10 +98,54 @@ contributes:
             w: 24
             h: 40
             help: "re.finding events as they happen (analyst, scanner, import, Ghidra session)"
+      - id: craft
+        title: Craft & rebuild
+        blurb: Study how any software works, then craft your own version (craft-anything).
+        help: >-
+          Record a study with tools/craft_studies.py — the craft-anything-study
+          skill walks the study → build → check pipeline and keeps the record
+          current. The browser shows every study clickable (target, mode, stack,
+          output folder, check mismatches); the tables and feed read the pack
+          data folder. Mode `deep` reads code/files — clean-room is the default.
+        panels:
+          - id: studies
+            title: Craft studies
+            kind: bundle
+            source: studio/craft.js
+            w: 24
+            h: 120
+            help: >-
+              Interactive studies browser: click a row (or Enter) for the full
+              study — target, mode, stack requested, output folder, agent,
+              check mismatches, notes — with filters, search, copy as markdown
+              and live refresh on re.craft.study events. Requires the
+              studio-script grant.
+          - id: craft-counts
+            title: Studies
+            kind: table
+            source: "data:craft/counts.json"
+            columns: [studies, ready, in_progress]
+            w: 24
+            h: 12
+          - id: craft-table
+            title: Craft studies
+            kind: table
+            source: "data:craft/studies.json"
+            columns: [study_id, target, target_kind, mode, stack, agent, status, updated]
+            w: 24
+            h: 60
+          - id: craft-feed
+            title: Study lifecycle
+            kind: events
+            w: 24
+            h: 40
+            help: "re.craft.study events as they happen (planned, studying, building, checking, ready)"
     palette:
-      - {id: open-browser, label: Open the RE findings browser, action: "route:halo-re/browser"}
-      - {id: open-table, label: Open the RE findings table, action: "route:halo-re/table"}
-      - {id: open-lifecycle, label: Open the RE findings lifecycle feed, action: "route:halo-re/feed"}
+      - {id: open-browser, label: Open the RE findings browser, action: "route:re/browser"}
+      - {id: open-table, label: Open the RE findings table, action: "route:re/table"}
+      - {id: open-lifecycle, label: Open the RE findings lifecycle feed, action: "route:re/feed"}
+      - {id: open-craft, label: Open the craft studies browser, action: "route:craft/studies"}
+      - {id: open-craft-table, label: Open the craft studies table, action: "route:craft/craft-table"}
     config_form: true
 permissions:
   - mcp:ghidra

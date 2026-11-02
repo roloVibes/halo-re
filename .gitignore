@@ -5,3 +5,5 @@ __pycache__/
 .DS_Store
 # Private authoring source: distilled research notes, not part of the pack
 _research/
+# Runtime state never ships (engage/data folder is resolved at runtime)
+pack/data/

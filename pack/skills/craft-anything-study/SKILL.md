@@ -110,7 +110,38 @@ tool bug to work around.
    command lines that produced them; fold anything
    security-relevant into the pack's finding flow (binary-triage
    verdict schema, or a re.finding event for confirmed items).
-5. **Hand off** — for PE/ELF/Mach-O code-level questions that
+5. **Record the study in Studio** — this is what fills the pack's
+   **Craft & rebuild** tab (`tools/craft_studies.py` writes the data
+   folder the tab reads; every write publishes a `re.craft.study`
+   event). Do it as the study progresses, not at the end:
+
+   ```
+   # when the study starts (mode deep only when the user asked for it)
+   python pack/tools/craft_studies.py add --id cs-01-<slug> \
+     --target <url|app|game|binary> --kind <web|app|game|binary> \
+     [--mode deep] [--stack "<the stack your version will use>"] \
+     [--output <where the rebuilt project will live>] \
+     [--agent claude|codex|acp:<name>] [--notes "<one line>"]
+
+   # as it moves: studying -> building -> checking (with the mismatch
+   # count from step 6's check) -> ready
+   python pack/tools/craft_studies.py update cs-01-<slug> --status studying
+   python pack/tools/craft_studies.py update cs-01-<slug> --status building
+   python pack/tools/craft_studies.py update cs-01-<slug> --status checking \
+     --mismatches <N> --check-note "<what still differs>"
+   python pack/tools/craft_studies.py update cs-01-<slug> --status ready
+   ```
+
+   Abandon it explicitly (`--status abandoned --notes "<why>"`) rather
+   than leaving it mid-flight — the tab's in-progress count is a
+   promise to the user.
+
+6. **Build and check** — the coding agent (yours, not the pack's) builds
+   the stack you recorded; compare the build with the original
+   (websites at three widths, a game's self-test, app runs) and write
+   the mismatch count back in step 5's `checking` line. `ready` means
+   the comparison passed, not that the build merely finished.
+7. **Hand off** — for PE/ELF/Mach-O code-level questions that
    craft-anything surfaced but did not answer, continue with the
    Ghidra path (ghidra-mcp-usage) when an install exists.
 
