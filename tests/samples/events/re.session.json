@@ -1,0 +1,4 @@
+{
+  "state": "failed",
+  "problem": "no Ghidra install found; run the ghidra-doctor skill, then set packs.settings.halo-re.ghidra_install_dir"
+}

@@ -19,12 +19,19 @@ import engage  # noqa: E402
 _VALID = Path(__file__).resolve().parent.parent / "examples" / "fixtures" / "valid"
 
 
-def _engagement(window_start: str = "2026-10-20T09:00:00Z",
-                window_expires: str = "2027-01-04T18:00:00Z",
+def _engagement(window_start: str | None = None,
+                window_expires: str | None = None,
                 status: str = "active") -> dict:
+    """A valid engagement whose window is derived from the clock at call time --
+    never a hardcoded date, which would turn these tests into a time bomb."""
+    import datetime as _dt
+    now = _dt.datetime.now(_dt.timezone.utc)
     eng = json.loads((_VALID / "engagement.json").read_text())
     eng["engagement_id"] = "eng-re-test-001"
-    eng["window"] = {"start": window_start, "expires": window_expires}
+    eng["window"] = {
+        "start": window_start or (now - _dt.timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "expires": window_expires or (now + _dt.timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
     eng["status"] = status
     return eng
 

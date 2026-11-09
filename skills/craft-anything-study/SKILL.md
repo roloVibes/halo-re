@@ -117,7 +117,7 @@ tool bug to work around.
 
    ```
    # when the study starts (mode deep only when the user asked for it)
-   python pack/tools/craft_studies.py add --id cs-01-<slug> \
+   python tools/craft_studies.py add --id cs-01-<slug> \
      --target <url|app|game|binary> --kind <web|app|game|binary> \
      [--mode deep] [--stack "<the stack your version will use>"] \
      [--output <where the rebuilt project will live>] \
@@ -125,11 +125,11 @@ tool bug to work around.
 
    # as it moves: studying -> building -> checking (with the mismatch
    # count from step 6's check) -> ready
-   python pack/tools/craft_studies.py update cs-01-<slug> --status studying
-   python pack/tools/craft_studies.py update cs-01-<slug> --status building
-   python pack/tools/craft_studies.py update cs-01-<slug> --status checking \
+   python tools/craft_studies.py update cs-01-<slug> --status studying
+   python tools/craft_studies.py update cs-01-<slug> --status building
+   python tools/craft_studies.py update cs-01-<slug> --status checking \
      --mismatches <N> --check-note "<what still differs>"
-   python pack/tools/craft_studies.py update cs-01-<slug> --status ready
+   python tools/craft_studies.py update cs-01-<slug> --status ready
    ```
 
    Abandon it explicitly (`--status abandoned --notes "<why>"`) rather

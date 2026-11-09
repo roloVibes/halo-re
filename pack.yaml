@@ -1,12 +1,9 @@
-# Halo RE — reverse-engineering capability pack manifest for Halo Harness.
-#
-# Contract: the shipped pack program (Halo 3.2.0.0+; validated against
-# halo 3.2.1.0). Ghidra itself is NEVER bundled (~1 GB): the pack ships an
-# MCP server that drives a local Ghidra install through pyghidra, a doctor
-# skill that finds and verifies the install, and a config key for its path.
+# Halo RE (halo-re): binary reverse engineering as a Halo pack.
+# HALO-PACK.md says how to work on it; README.md lists every part. Every value
+# here is checked at install: `halo pack test .` runs every check.
 id: halo-re
 name: Halo RE
-version: 0.4.0
+version: 0.5.0
 description: >-
   Binary reverse-engineering capability pack: a read-only Ghidra MCP server
   (decompile, disassemble, search, xrefs, callgraph), procedural RE skills
@@ -16,11 +13,16 @@ description: >-
 author: Pinball Genie LLC (github.com/roloVibes)
 license: All rights reserved — Pinball Genie LLC (see /LICENSE)
 halo_api:
-  # Extension API version (halo_harness.ext.API_VERSION), not the Halo version.
-  min: "1.0"
+  # The extension API version (halo_harness.ext.API_VERSION), not the Halo
+  # version. 1.1 is the floor for a pack that declares `requires` tools.
+  min: "1.1"
+  max: "1.9"
 halo:
-  # First Halo version with the pack registry + workflows (3.2.0.0).
-  min: 3.2.0.0
+  # First Halo version this pack is written for (pack test/doctor, API 1.1).
+  min: "3.3"
+# The capabilities this pack declares. A workflow's `prerequisites.capabilities`
+# and a stage's `needs:` must name one of these, and so must every name under
+# contributes.fleet.capabilities below.
 capabilities:
   - ghidra        # the pack's own read-only Ghidra MCP server (mcp/ghidra_server.py)
   - triage        # binary platform/arch classification and inventory
@@ -30,7 +32,52 @@ capabilities:
   - findings      # evidence-chained RE findings store + lifecycle (tools/findings_store.py)
   - reporting     # confirmed-only report + leadership email renderers (reporting/)
   - skills        # procedural RE know-how contributed as skills
-requires: []      # no hard pack dependencies
+  - halo-re.analysis  # the fleet advertisement (contributes.fleet below)
+# External tools the pack drives. Halo NEVER installs one: `halo pack doctor`
+# names a missing one with its install line, `halo pack test` skips what it gates.
+requires:
+  - kind: python
+    name: pyghidra
+    install:
+      windows: python -m pip install pyghidra
+      linux: python -m pip install pyghidra
+      mac: python -m pip install pyghidra
+    url: https://github.com/NationalSecurityAgency/ghidra
+    license: Apache-2.0
+    why: bridges Halo's Python to a local Ghidra install, so the pack's MCP server can open a project and decompile
+    used_by: [mcp:ghidra, skills/ghidra-doctor]
+  - kind: command
+    name: opengrep
+    install:
+      windows: irm https://raw.githubusercontent.com/opengrep/opengrep/main/install.ps1 | iex
+      linux: curl -fsSL https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash
+      mac: curl -fsSL https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash
+    url: https://github.com/opengrep/opengrep
+    license: LGPL-2.1
+    why: >-
+      scans decompiled output; the OSS `semgrep` CLI strips the JSON fields (extra.lines, extra.metavars) a triage
+      model needs, so opengrep is the required scanner, not semgrep
+    used_by: [workflows/semgrep-triage.yaml, skills/semgrep-decompiled]
+  - kind: python
+    name: ghidrecomp
+    install:
+      windows: uv tool install ghidrecomp
+      linux: uv tool install ghidrecomp
+      mac: uv tool install ghidrecomp
+    url: https://github.com/clearbluejar/ghidrecomp
+    license: GPL-3.0
+    why: decompiles a whole binary to one .c file per function, which is what the SAST scan and the token-budget pass read
+    used_by: [skills/semgrep-decompiled, skills/token-budget-a-binary]
+  - kind: command
+    name: craft-anything-cli
+    install:
+      windows: git clone https://github.com/storytold/craft-anything && cargo install --path craft-anything/apps/craft-anything-cli
+      linux: git clone https://github.com/storytold/craft-anything && cargo install --path craft-anything/apps/craft-anything-cli
+      mac: git clone https://github.com/storytold/craft-anything && cargo install --path craft-anything/apps/craft-anything-cli
+    url: https://github.com/storytold/craft-anything
+    license: MIT OR Apache-2.0
+    why: the external study engine for formats the Ghidra path does not cover (.NET, JVM/APK, Mach-O, WASM, firmware)
+    used_by: [skills/craft-anything-study]
 contributes:
   agents:
     - agents/hr-orchestrator.yaml
@@ -43,7 +90,8 @@ contributes:
     - teams/hr-kernel-driver-audit.yaml
     - teams/hr-patch-diff.yaml
     - teams/hr-semgrep-triage.yaml
-  skills: skills            # the plugin layout's own place
+  skills: skills
+  commands: commands
   mcp:
     - {name: ghidra, description: read-only Ghidra analysis (decompile, disassemble, search, xrefs, imports, callgraph)}
   workflows: [triage, semgrep-triage]
@@ -147,12 +195,29 @@ contributes:
       - {id: open-craft, label: Open the craft studies browser, action: "route:craft/studies"}
       - {id: open-craft-table, label: Open the craft studies table, action: "route:craft/craft-table"}
     config_form: true
+  fleet:
+    capabilities:
+      - name: halo-re.analysis
+        description: Runs a binary analysis on a harness that runs the pack
+        requires:
+          runtimes: [python]
+        capacity:
+          parallel: 1
+    inspector:
+      - label: "Halo RE: what a part needs"
+        source: fleet/notes.md
+    mission:
+      metadata:
+        pack: halo-re
+  # schemas/, playbooks/ and resources/ are the pack's data files, read by its
+  # own tools and referenced from the bios — not registry contributions.
 permissions:
   - mcp:ghidra
   - bash        # the skills drive CLI RE tools (file/nm/strings/otool, ghidrecomp, opengrep, craft-anything-cli)
   - studio-script # the findings browser bundle panel (studio/findings.js)
 config:
   schema:
+    type: object
     properties:
       ghidra_install_dir:
         {type: string, description: "Path to a Ghidra install (the folder holding Ghidra/application.properties). Auto-detected when empty; the doctor skill verifies by effect and can download the official release on demand."}

@@ -1,0 +1,7 @@
+{
+  "study_id": "cs-01-maze-rom",
+  "target": "an arcade ROM",
+  "mode": "clean-room",
+  "status": "studying",
+  "stack": "python"
+}

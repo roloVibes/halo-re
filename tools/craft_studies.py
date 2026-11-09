@@ -25,13 +25,13 @@ best-effort; never raises). The data folder is
 harness's own resolver is used when importable) — NEVER the pack folder.
 
 CLI (the skill drives this; you can too):
-  python pack/tools/craft_studies.py add --id cs-01-example --target <url|app|file>
+  python tools/craft_studies.py add --id cs-01-example --target <url|app|file>
       --kind web|app|game|binary [--mode clean-room|deep] [--stack "..."]
       [--output <dir>] [--agent claude|codex|acp:<name>] [--notes "..."]
-  python pack/tools/craft_studies.py update <id> [--status planned|studying|
+  python tools/craft_studies.py update <id> [--status planned|studying|
       building|checking|ready|abandoned] [--notes "..."] [--output <dir>]
       [--mismatches N] [--check-note "..."]
-  python pack/tools/craft_studies.py list
+  python tools/craft_studies.py list
   (global: --data-dir <path>)
 
 Stdlib-only by pack convention.

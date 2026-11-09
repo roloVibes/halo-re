@@ -1,0 +1,14 @@
+{
+  "finding_id": "ref-2026-0007",
+  "engagement_id": "eng-driver-audit-2026-01",
+  "title": "Unvalidated IOCTL length copied into a fixed-size kernel stack buffer",
+  "severity": "high",
+  "state": "confirmed",
+  "source": "ghidra-session",
+  "target_ref": "driver.sys",
+  "binary": "driver.sys",
+  "function": "FUN_140001a40",
+  "cwe": "CWE-787",
+  "evidence_ref": "ev-0003",
+  "actor": "hr-vuln-reviewer"
+}

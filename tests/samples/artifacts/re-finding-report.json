@@ -1,0 +1,22 @@
+{
+  "binary": "driver.sys",
+  "generated_by": "hr-reporter",
+  "analysis_path": "audit.kernel-ioctl",
+  "findings": [
+    {
+      "function": "FUN_140001a40",
+      "issue": "IOCTL handler copies a caller-supplied length into a fixed 256-byte stack buffer",
+      "severity": "high",
+      "evidence": "memcpy(local_118, param_2, *(u32 *)(param_2 + 4));",
+      "cwe": "CWE-787",
+      "confidence": "confirmed"
+    }
+  ],
+  "leads": [
+    {
+      "function": "FUN_140002100",
+      "observation": "unusual MmMapIoSpace call with a caller-influenced physical address; needs a follow-up pass"
+    }
+  ],
+  "summary": "One confirmed high: the IOCTL length is never validated before the copy. Next: establish reachability from an unprivileged caller."
+}

@@ -8,13 +8,13 @@ triage/static-sweep workflows.
 
 ## Installation
 
-Five steps; the pack itself takes under a minute, Ghidra (step 4) is the
+Four steps; the pack itself takes under a minute, Ghidra (step 3) is the
 only big download. Every command below was run and verified against
-halo 3.3.4.0.
+halo 3.3.12.0.
 
 ### Before you start
 
-- **[Halo Harness](https://github.com/roloVibes/Halo-Harness) 3.2.0.0 or
+- **[Halo Harness](https://github.com/roloVibes/Halo-Harness) 3.3 or
   newer, already installed and initialized.** This is a Halo pack, not a
   standalone program — without Halo there is nothing to install it into.
   If you don't have Halo yet:
@@ -27,63 +27,53 @@ halo 3.3.4.0.
   (Windows and no-installer options:
   [Halo-Harness docs/INSTALL.md](https://github.com/roloVibes/Halo-Harness/blob/master/docs/INSTALL.md))
 
-- **git**, to clone this repo.
-- For binary analysis (step 4): **Ghidra** (~570 MB, Apache-2.0 — not
+- For binary analysis (step 3): **Ghidra** (~570 MB, Apache-2.0 — not
   bundled) and a **JDK 21+**. The pack's doctor can download Ghidra for
   you; everything else it detects automatically.
+- Optional, per skill: `opengrep` (SAST over decompiled code), `ghidrecomp`
+  (decompile a whole binary to one `.c` per function) and `craft-anything-cli`
+  (broad-format study engine). `pack.yaml`'s `requires:` carries the install
+  line for each; `halo pack doctor` names whichever is missing on your machine,
+  and the skills that need one skip visibly without it.
 
-### Step 1 — clone this repo (location is your choice)
+### Step 1 — install the pack
 
-```sh
-git clone https://github.com/roloVibes/halo-re.git ~/src/halo-re
-```
-
-`~/src/halo-re` is just an example — the clone can live anywhere.
-The clone is only the **download source**: step 2 copies the pack into
-Halo's own storage (`~/.halo/packs/halo-re/`), and after that the
-clone is no longer needed.
-
-> **Do not** use `halo pack install
-> https://github.com/roloVibes/halo-re.git` — it fails with
-> `no pack.yaml in src`. Halo requires the pack manifest at the root of
-> a git URL, and this repo keeps it under `pack/`. Install from the
-> cloned folder's `pack/` subdirectory, as in step 2.
-
-### Step 2 — install the pack
-
-Run this in your **terminal** — the same place you run `halo`. You do
-not need a Halo session open; if you run it through a session's shell
-tool that works too, but the pack only loads in sessions started
-*after* step 3 (Halo reads enabled packs when a session starts).
+The repository root **is** the pack, so Halo can install it straight from
+GitHub. Run this in your **terminal** — the same place you run `halo`. You do
+not need a Halo session open; the pack only loads in sessions started *after*
+step 2 (Halo reads enabled packs when a session starts).
 
 ```sh
-cd ~/src/halo-re                # wherever you cloned it
-halo pack install ./pack
+halo pack sources add https://github.com/roloVibes/halo-re
+halo pack install halo-re
 ```
 
 Expected output:
 
 ```
-installed halo-re 0.4.0 at ~/.halo/packs/halo-re (disabled)
-it offers: 5 bios, 4 lineups, 11 skills, 1 MCP server
-it requests: mcp:ghidra, bash
-enable it: halo pack enable halo-re --grant mcp:ghidra --grant bash
+installed halo-re 0.5.0 at ~/.halo/packs/halo-re (disabled)
+it offers: 5 bios, 4 lineups, 12 skills, 2 commands, 1 MCP server
+it requests: mcp:ghidra, bash, studio-script
+enable it: halo pack enable halo-re --grant mcp:ghidra --grant bash --grant studio-script
 ```
 
-The pack arrives **disabled** — that is normal; step 3 turns it on.
-(If you see `halo-re is already installed ... (halo pack update
-halo-re)`, you already did this — continue at step 3.)
+From a clone instead (`git clone https://github.com/roloVibes/halo-re.git`,
+then `halo pack install ./halo-re`) works the same way.
 
-### Step 3 — enable it and grant what it needs
+The pack arrives **disabled** — that is normal; step 2 turns it on.
+(If you see `halo-re is already installed ... (halo pack update
+halo-re)`, you already did this — continue at step 2.)
+
+### Step 2 — enable it and grant what it needs
 
 ```sh
-halo pack enable halo-re --grant mcp:ghidra --grant bash
+halo pack enable halo-re --grant mcp:ghidra --grant bash --grant studio-script
 ```
 
-(`mcp:ghidra` is the read-only Ghidra server; `bash` is what the
-skills and playbooks run under.)
+(`mcp:ghidra` is the read-only Ghidra server; `bash` is what the skills and
+playbooks run under; `studio-script` runs the pack's own Studio panels.)
 
-### Step 4 — set up Ghidra (the doctor does the work)
+### Step 3 — set up Ghidra (the doctor does the work)
 
 Start a new Halo session (`halo`) — a session that was already open
 when you enabled the pack will not have it — and run the pack's
@@ -100,11 +90,11 @@ when you enabled the pack will not have it — and run the pack's
   under — run that one command; without it the server starts but
   binary analysis refuses.
 
-### Step 5 — verify
+### Step 4 — verify
 
 ```sh
-halo pack list              # → halo-re  0.4.0  enabled  user
-halo pack inspect halo-re   # → state: enabled; mcp:ghidra (granted), bash (granted); problems: none
+halo pack list              # → halo-re  0.5.0  enabled  user
+halo pack inspect halo-re   # → problems: none
 ```
 
 Then, in a Halo session:
@@ -122,14 +112,20 @@ halo workflow run halo-re/triage --input binary=<path-to-binary>
 ### Updating and removing
 
 ```sh
-git -C ~/src/halo-re pull     # refresh the clone first
-halo pack update halo-re      # shows what changes, asks before applying
+halo pack update halo-re      # from its source: shows what changes, asks before applying
+halo pack rollback halo-re    # back to the version the last update replaced
 halo pack remove halo-re      # the pack's files only; your config stays
 ```
 
 Note: a Halo upgrade reinstalls its Python environment — `pyghidra`
 must be reinstalled there (the doctor names the command) or the server
 starts but binary analysis refuses.
+
+### Working on the pack itself
+
+See **[HALO-PACK.md](HALO-PACK.md)** — the pack's contract page: what every
+part is, the change loop (`halo pack test .` must stay at `0 failed`), and the
+rules this repo holds to. `CHANGELOG.md` says what changed per version.
 
 ## The design rule
 
@@ -143,15 +139,15 @@ project or the target.
 
 | Piece | What it is |
 |---|---|
-| **Ghidra MCP server** (`pack/mcp/`) | stdio server over pyghidra: `decompile_function`, `disassemble`, `search_functions`, `search_strings`, `list_imports`/`list_exports`, `list_xrefs`, `gen_callgraph`, `read_bytes`, `binary_metadata`, `list_binaries`, `open_binary`. Read-only by construction: no rename/delete/save tools exist. |
-| **12 skills** (`pack/skills/`) | Procedural know-how: Ghidra bring-up and usage, binary triage, token budgeting, kernel IOCTL audit, kernel API audit, patch-diff analysis, Mach-O triage/diff, semgrep-on-decompiled, agent security posture, model evaluation for RE, craft-anything study (drives an external `craft-anything-cli` for formats Ghidra doesn't cover: .NET, Java, Android/APK, Apple, WASM, game archives, firmware). |
+| **Ghidra MCP server** (`mcp/`) | stdio server over pyghidra: `decompile_function`, `disassemble`, `search_functions`, `search_strings`, `list_imports`/`list_exports`, `list_xrefs`, `gen_callgraph`, `read_bytes`, `binary_metadata`, `list_binaries`, `open_binary`. Read-only by construction: no rename/delete/save tools exist. |
+| **12 skills** (`skills/`) | Procedural know-how: Ghidra bring-up and usage, binary triage, token budgeting, kernel IOCTL audit, kernel API audit, patch-diff analysis, Mach-O triage/diff, semgrep-on-decompiled, agent security posture, model evaluation for RE, craft-anything study (drives an external `craft-anything-cli` for formats Ghidra doesn't cover: .NET, Java, Android/APK, Apple, WASM, game archives, firmware). |
 | **5 agent roles + 4 lineups** | orchestrator, triage, analyst (drives the Ghidra tools), vuln-reviewer (read-only judge), reporter; lineups for triage, kernel-driver audit, patch diff, semgrep triage. |
 | **9 playbooks** | Structured workflows with impact classes and evidence requirements — all read-only/low-impact toward the world. |
 | **2 Halo workflows** | `halo workflow run halo-re/triage --input binary=<path>` and `halo-re/semgrep-triage` — multi-stage, judged, gated pipelines that compile to Orchestra goals. |
 | **Artifacts + events** | The `re-finding-report` artifact schema and `re.finding` / `re.session` events for the Studio live feed. |
-| **Findings lifecycle** (0.3.0) | An evidence-chained findings store (`pack/tools/findings_store.py`): hash-chained ledger, content-addressed artifacts, an 8-status lifecycle where `confirmed` structurally requires independent reproduction AND a reviewer decision (no agent-asserted confirmations), no-delete with controlled withdrawal. Engagement records (`pack/schemas/re-engagement.schema.json`) scope the authorized work. |
+| **Findings lifecycle** (0.3.0) | An evidence-chained findings store (`tools/findings_store.py`): hash-chained ledger, content-addressed artifacts, an 8-status lifecycle where `confirmed` structurally requires independent reproduction AND a reviewer decision (no agent-asserted confirmations), no-delete with controlled withdrawal. Engagement records (`schemas/re-engagement.schema.json`) scope the authorized work. |
 | **Two Studio sections** (0.4.0) | **Reverse engineering** — the findings browser (every finding clickable: evidence ledger rows, validation, reviewer decision, remediation, audit history, filters, search, live refresh) plus counts/table/feed. **Craft & rebuild** — the craft-anything path: study any software, then craft your own version, tracked by `tools/craft_studies.py` (target, mode clean-room/deep, stack, output folder, status planned→studying→building→checking→ready, check mismatches) with its own interactive studies browser, tables and study-lifecycle feed. Both bundle panels need the `studio-script` grant; the tables and feeds work without it. |
-| **Reporting** (0.3.0) | Confirmed-only renderers (`pack/reporting/`): full report, leadership email (FUD-filtered, fail-closed on anything not confirmed), and `/hr report`. |
+| **Reporting** (0.3.0) | Confirmed-only renderers (`reporting/`): full report, leadership email (FUD-filtered, fail-closed on anything not confirmed), and `/hr report`. |
 
 ## What you supply — never bundled
 
@@ -181,7 +177,7 @@ The details behind [Installation](#installation) step 4:
 - No Ghidra binary, no target binaries, no sample data.
 - No methodology corpus: the skills are original prose distilling
   techniques and constants (facts and patterns), credited to their
-  sources in [pack/resources/REPOS.md](pack/resources/REPOS.md). Nothing
+  sources in [resources/REPOS.md](resources/REPOS.md). Nothing
   from any course's notebooks is reproduced.
 - No active/dynamic analysis: no execution of targets, no debugging, no
   fuzzing. The schema itself forbids impact above `low-impact` (a local
@@ -189,16 +185,28 @@ The details behind [Installation](#installation) step 4:
 
 ## Status
 
-0.4.0 — `halo pack inspect` reports `problems: none`; 93 tests green
-(0.2.1 — `halo pack inspect` reported `problems: none` (validated against
-halo 3.2.1.0 and, on 2026-10-27, halo 3.3.2.0). The MCP server is
-smoke-tested end-to-end against a real Ghidra 12.1.2 install (decompile
-through stdio JSON-RPC, all 12 tools); the mcp 1.x→2.x SDK rename
+0.5.0 — **framework conformance**: the pack now uses the
+[Halo pack template](https://github.com/roloVibes/halo-pack-template) end to
+end. The repo root is the pack (so `halo pack sources add` + `halo pack
+install` work), the template's project files are in place (`HALO-PACK.md`,
+`CHANGELOG.md`, `tests/`, `.github/workflows/pack-test.yml`), and the external
+tools the pack drives are declared under `requires:` with their install lines.
+**Reinstall once** — an install recorded from `./halo-re/pack` points at a
+folder that no longer exists.
+
+Verified on this tree at 0.5.0: `halo pack test .` → **52 checks, 0 failed**
+(10 skips, all of them this machine: `pyghidra`, `opengrep`, `ghidrecomp` and
+`craft-anything-cli` are not installed in the Python Halo runs under, plus the
+fleet-capability row), `halo pack inspect .` → `problems: none`, and the pack's
+own behaviour suite → **93 passed**.
+
+The MCP server is smoke-tested end-to-end against a real Ghidra 12.1.2 install
+(decompile through stdio JSON-RPC, all 12 tools); the mcp 1.x→2.x SDK rename
 (`FastMCP` → `MCPServer`) is handled at import, initialize + tools/list
-verified under Halo's Python. Note a Halo upgrade reinstalls its Python
-env — `pyghidra` must be reinstalled there (the doctor names the
-command) or the server starts but binary analysis refuses. See
-[pack/COMPATIBILITY.md](pack/COMPATIBILITY.md).
+verified under Halo's Python. Note a Halo upgrade reinstalls its Python env —
+`pyghidra` must be reinstalled there (the doctor names the command) or the
+server starts but binary analysis refuses. See
+[COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## License
 
@@ -240,8 +248,8 @@ a binary ──open_binary──▶ Ghidra project (import + analyze, expensive,
 
 ## The MCP server
 
-`pack/mcp/ghidra_server.py` is a stdio JSON-RPC server over the pyghidra
-core (`pack/mcp/ghidra_core.py`), launched by `.mcp.json` under Halo's
+`mcp/ghidra_server.py` is a stdio JSON-RPC server over the pyghidra
+core (`mcp/ghidra_core.py`), launched by `.mcp.json` under Halo's
 own Python (`${halo_python}` / `${CLAUDE_PLUGIN_ROOT}`). It speaks both
 mcp 1.x (`FastMCP`) and 2.x (`MCPServer`); without `pyghidra` it starts
 and every tool degrades to a doctor-pointing error instead of crashing.
@@ -251,7 +259,7 @@ Ghidra refuses it), `tools_dir`, `rea_dir`.
 Every measured trap — dot-prefixed project paths, GHIDRA_INSTALL_DIR
 inheritance, the fresh-import analysis gap, the two-stage start, the zip
 exec-bit loss — is in
-[pack/docs/GHIDRA-NOTES.md](pack/docs/GHIDRA-NOTES.md) and baked into the
+[docs/GHIDRA-NOTES.md](docs/GHIDRA-NOTES.md) and baked into the
 code.
 
 ---

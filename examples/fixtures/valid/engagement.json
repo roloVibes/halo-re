@@ -13,8 +13,8 @@
     "decompilation"
   ],
   "window": {
-    "start": "2026-11-01T09:00:00Z",
-    "expires": "2026-12-01T18:00:00Z"
+    "start": "2020-01-01T00:00:00Z",
+    "expires": "2099-12-31T23:59:59Z"
   },
   "data_handling": {
     "locality": "on-box-only",
