@@ -1,0 +1,26 @@
+# Halo RE's own behaviour suite, beside `halo pack test .` (pack-test.yml).
+# `halo pack test` checks the manifest and every contribution it names; this
+# checks what the pack's code actually does -- the finding lifecycle, the
+# reporting renderers, the craft-study store and the Studio data layer.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: pytest
+        shell: bash
+        run: uv run --no-project --python 3.12 --with pytest --with jsonschema --with pyyaml python -m pytest tests -q
