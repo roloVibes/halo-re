@@ -6,6 +6,8 @@ Ghidra MCP server, procedural RE skills distilled from agentic-RE training,
 kernel-driver and patch-diff audit playbooks, analysis agent roles, and
 triage/static-sweep workflows.
 
+**Community:** questions, ideas and help on the [Halo Harness Discord server](https://discord.gg/vuJvKjS9A).
+
 ## Installation
 
 Four steps; the pack itself takes under a minute, Ghidra (step 3) is the
